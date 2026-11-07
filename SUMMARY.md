@@ -1,78 +1,51 @@
-# CDPS with put option: four scenarios, one economic outcome, four reported numbers
+# Hedge P&L Mismatch: Summary and Trader Awareness
 
 **Model:** https://peterdmyan.github.io/cdps-position-model/
 
-## The structure
+Our CDP position with a put works economically, but reported P&L does not show its real performance until we close. The CDPs and their dividends are carried at cost, while the put is marked to market (PV of CDPs with the put − CDP market price). Over the 4-year hold, reported and actual P&L can sit up to S$504k apart, and the whole difference is booked on the day we close.
 
-The position carries a contractual floor of 12%. With a 6% cash dividend on cost, the put strike
-that delivers that floor is **128.68**, which is 28.68% above the entry price of 100. The stock
-starts below the strike and stays there unless it rallies more than 28.68%, so in most outcomes the
-put is exercised and the floor pays. The put is not tail protection here. It is the main source of
-return.
+## Concerns
 
-## Bottom line
+Illustrative case: 10,000 CDP units at S$100 (S$1.0m), 6% dividend, closed at the end of year 4. The 4-year S$95 put is worth **S$19.03 per CDP (S$190.3k, 19% of notional)** on day one: PV of the CDP with the put, S$119.03, minus the S$100 market price. It is expensive because the 6% dividend exceeds the 3% rate, which puts the 4-year forward at S$88.69, below the strike. The up case is set to a 12% position IRR.
 
-| Scenario | Stock, year 4 | Settles at | Reported, 4 years | Actual, 4 years | IRR |
-|---|---:|---:|---:|---:|---:|
-| A Rises past the strike | 160 | 160.00 | **-7.32** | +84.00 | 17.58% |
-| B Flat | 100 | 128.68 | +52.68 | +52.68 | 12.00% |
-| C Falls moderately | 90 | 128.68 | +62.68 | +52.68 | 12.00% |
-| D Falls hard | 60 | 128.68 | **+92.68** | +52.68 | 12.00% |
+Four-year totals by reporting line, S$k (per CDP in brackets):
 
-**B, C and D are the same deal.** All three settle at the floor and all three return exactly 12%.
-Reported earnings across them range from +52.68 to +92.68, a spread of 40 per share that corresponds
-to no difference in economics whatsoever.
+| Scenario (price at year 4) | CDP dividend | CDP option MTM | CDP sold at close | Total P&L | Position IRR |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Up, +10.7% a year (S$150.42) | +300.2 (S$30.02) | −190.3 (−S$19.03) | +504.2 (S$50.42) | +614.1 | 12.0% |
+| Flat (S$100.00) | +240.0 (S$24.00) | −190.3 (−S$19.03) | 0 | +49.7 | 1.1% |
+| Down, above strike, −1% a year (S$96.06) | +234.9 (S$23.49) | −190.3 (−S$19.03) | −39.4 (−S$3.94) | +5.3 | 0.1% |
+| Down, below strike, −10.7% a year (S$63.46) | +190.1 (S$19.01) | +125.1 (S$12.51) | −365.4 (−S$36.54) | −50.2 | −1.2% |
 
-## Why it happens
+The timing is the problem. Year 4 alone reports +S$579k in the up case, −S$272k in the deep fall and −S$77k in the mild fall, because the option's last-year decay or payoff and the whole CDP gain or loss land together. The year-by-year split is on the model page.
 
-The option carrying value is defined as accreted value minus stock price, so a falling stock inflates
-reported earnings. At the same time the CDPS is carried at cost, so the stock's decline is never
-recognised on the asset itself. The stock move is booked once, with the wrong sign, and never where
-it belongs.
+1. **Performance understated when the market rises.** For the first two years reported P&L is near zero, because put losses offset the dividends, while the position has actually made over S$230k. The desk can look like it is missing a 12% IRR deal that is on track.
+2. **False profit when the market falls below the strike.** Reported P&L climbs to S$315k because put gains and dividends are booked but the CDP loss is not. Closing turns this into −S$50k, a S$365k hit in a single period.
+3. **A small fall is the quiet worst case.** If the price drifts down but stays above S$95, the put expires worthless. Reported P&L shows S$83k early in year 4, then drops to S$5k at close: the S$190k put cost is fully lost and the protection never paid.
+4. **Pressure to act on the wrong signal.** Weak reported P&L in a rising market invites cutting the put. Strong reported P&L in a falling market can encourage more risk or bonuses on gains that are not real.
+5. **Year-4 cliff.** Put time decay is heaviest in the last year, and every CDP price move is realized at close, so year-4 P&L will be volatile in every scenario.
 
-The arithmetic is exact: when the floor binds, reported exceeds economics by the unrecognised stock
-move. Stock down 40, reported overstates by 40.
+## Trader awareness
 
-## Three concerns
+Traders should read their reported P&L as put plus dividends only, not as the result of the position.
 
-1. **Four numbers for one outcome.** Three scenarios with identical economics report a 40 per share
-   spread. Anyone managing to the reported line is managing noise.
+- **A falling CDP price is not a good month.** Put gains offset a CDP loss that is not yet booked; check actual P&L.
+- **Know where the strike is.** Above S$95 at close, the put pays nothing and its full S$190k cost is lost; below it, the put caps the loss. Track the price against the strike as year 4 approaches.
+- **Expect near-zero reported P&L early in a rising market.** That is the put cost absorbing the dividends, not underperformance.
+- **Do not unwind or restructure the put to improve reported P&L.** Any change to the hedge is a risk decision and needs approval.
+- **Plan the close.** The CDP gain or loss realized at year 4 lands in one period; agree timing and messaging with Finance in advance.
+- **Watch the impairment trigger.** A deep fall could force an impairment before year 4 and bring the loss forward.
+- **Report both lines every month:** reported, and actual (CDPs at market + dividends + put).
 
-2. **Reported is right only by coincidence.** Scenario B matches to the cent because the stock
-   happens to end exactly at the entry price. Move it either way and the two separate immediately.
+## Ask
 
-3. **The rally case inverts completely.** The best real outcome, +84.00 and 17.58%, is the only one
-   that prints a loss. The divergence there runs at twice the stock move, because the rally is
-   subtracted through the option plug and added through economics at the same time. The gap reaches
-   91.32 per share and lands as a single true-up at close.
+- [ ] Approve a monthly two-line P&L view (reported vs actual) for this position
+- [ ] Agree that the desk is judged on actual P&L and position IRR, not reported P&L alone
+- [ ] Ask Finance whether fair value or hedge accounting for the CDPs can remove the mismatch
+- [ ] Brief traders on the points above and confirm the impairment trigger level
 
-## What the desk needs to know
-
-- **This is a 12% instrument plus a call struck at 128.68, not a protected equity position.** Risk
-  and hedging should be framed off that, not off the 100 entry price.
-- **Reported option P&L is the stock price with a minus sign.** Read as exposure it points the wrong
-  way. Risk has to come off the economic line.
-- **Hedging the stock will destabilise the book.** A short hedge into a rally loses at the same
-  moment the option plug reports a loss. They compound rather than offset.
-- **Only the rally scenario carries real variance.** Below 128.68 the payoff is fixed. The genuine
-  question is the probability of finishing above 128.68, not the swings in reported earnings below it.
-- **The floor is only as good as the writer.** Three of four scenarios depend entirely on the put
-  paying. If the writer is connected to the stock that is falling, the protection is worth least
-  exactly when it is needed, and nothing in the reporting flags that. This is the largest unmodelled
-  risk here.
-- **Dividend risk hits twice.** A suspension stops the income line and invalidates the accretion
-  schedule at the same time, which also moves the strike that floors the IRR.
-
-## Asks
-
-1. Confirmation from Technical Accounting that a cost-carried CDPS plus an option plug defined as
-   accreted value minus spot is the agreed treatment, given that it leaves the stock unmarked.
-2. A view on whether the position is better presented as what it economically is, a 12% instrument
-   plus a call struck at 128.68.
-3. A decision on forecasting and disclosing the closing true-up ahead of the period it lands in.
+Numbers are illustrative. The put cost, 19% of notional here, drives their size; rerun them with the actual put terms before wider circulation.
 
 ---
 
-*Illustrative model on round numbers. No position, counterparty or issuer data. A Black-Scholes put
-premium is not computed: that needs volatility, the risk-free rate and the exercise style. Not
-investment advice and not an accounting opinion.*
+*An alternative reading, with the 12% IRR as a contractual floor and a strike of 128.68, is in [SUMMARY-floor.md](SUMMARY-floor.md) and on [floor.html](https://peterdmyan.github.io/cdps-position-model/floor.html). Illustrative model, not investment advice and not an accounting opinion.*

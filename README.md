@@ -3,41 +3,42 @@
 An illustrative four-year model of a CDPS position held alongside a put option, built to show
 where book reporting and economic reality diverge.
 
-**Live page:** https://peterdmyan.github.io/cdps-position-model/  &nbsp;&nbsp;·&nbsp;&nbsp; **Management summary:** [SUMMARY.md](SUMMARY.md)
+Two readings of the same deal terms live here side by side.
 
-## What it models
+| Page | Reading | Summary |
+|---|---|---|
+| [Priced-put model](https://peterdmyan.github.io/cdps-position-model/) | 12% IRR is the up-case return; S$95 strike; put priced with Black-Scholes at S$19.03 | [SUMMARY.md](SUMMARY.md) |
+| [IRR-floor model](https://peterdmyan.github.io/cdps-position-model/floor.html) | 12% IRR is a contractual floor; strike solved at 128.68; no premium priced | [SUMMARY-floor.md](SUMMARY-floor.md) |
+
+## Priced-put model
 
 | Input | Value |
 |---|---|
-| Entry price / spot | 100 |
-| CDPS cash dividend | 6% on cost, recognised yearly |
-| Position IRR | 12%, contractual floor |
-| Put strike | 128.68, the level that delivers the floor |
-| Tenor | 4 years |
+| CDP price | S$100, 10,000 units (S$1.0m) |
+| Dividend | 6% a year on market price, paid quarterly, booked as income |
+| Put | 4-year European put, strike S$95, 25% volatility, 3% rate |
+| Put value on day one | S$19.03 per CDP, S$190.3k in total |
+| Hold | 4 years, closed at the end of year 4 |
 
-Accounting treatment, as specified:
+Accounting treatment:
 
-- **CDPS dividend** is carried at cost. Income is recognised yearly at the coupon on original cost.
-- **Put option** is marked to market, with carrying value defined as
-  `PV(CDPS with option) - stock price`.
+- **CDPS and dividend** carried at cost; dividends booked as income; the CDP price change is booked only when sold.
+- **Put option** marked to market as `PV(CDPS with option) - stock price`.
 
-## The headline finding
+Four scenarios: price rises (+10.7% a year, 12% position IRR), flat, falls but stays above the strike
+(−1% a year), and falls below the strike (−10.7% a year). The page shows reported and actual P&L by
+year, the put calculation, and a year-by-year split of dividend, option MTM and the CDP gain or loss
+realized at close.
 
-Because 12% is a floor, three of the four scenarios settle at the same strike and return exactly
-12%. They are economically identical. Reported earnings across them still differ by 40 per share.
+### Headline finding
 
-The cause is that the stock price enters reported earnings through the option plug with a negative
-sign, while the CDPS is carried at cost and the stock's move is never recognised on the asset
-itself. When the floor binds, reported exceeds economics by exactly the unrecognised stock move. In
-the rally case the position prints a loss while earning 17.58%.
-
-## Scenarios
-
-Four stock paths over the four years: rises past the strike, flat, falls moderately, falls hard. The
-page is interactive, so every input and every terminal stock price can be changed. The strike is
-locked to the IRR floor by default and can be unlocked to test other structures.
+Reported and actual P&L can sit up to S$504k apart before close, and the gap is booked in one
+period at year 4. A falling price shows a reported profit (+S$315k) that turns into −S$50k at close.
+A small fall above the strike is the quiet worst case: the put expires worthless and the position
+ends at +S$5k.
 
 ## Caveats
 
-Round numbers throughout. No position, counterparty or issuer data. Not investment advice and not an
-accounting opinion.
+Round numbers throughout. No position, counterparty or issuer data. Volatility and strike in the
+priced-put model are assumptions, and the put cost drives the size of every figure. Not investment
+advice and not an accounting opinion.

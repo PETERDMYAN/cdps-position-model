@@ -3,600 +3,180 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CDPS with Put Option: Reported vs Actual</title>
+<title>CDP Put P&amp;L Scenarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+/* Layout: a single desk-report column; summary table first, then three scenario panels sharing one P&L scale */
 :root{
-  --bg:#f7f7f5; --panel:#ffffff; --ink:#1a1a18; --muted:#6b6b66; --line:#e3e3df;
-  --accent:#1f4e79; --rep:#c2683a; --act:#1f4e79; --gapfill:#7f8c9b;
-  --good:#2f7a4f; --bad:#b3402f; --warn:#8a6d1f; --warnbg:#fdf6e3;
-  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#15202b; --ink-2:#4a5866; --ink-3:#7b8794; --line:#dde2e8;
+  --reported:#1f5fd1; --actual:#5b6672; --gain:#16794a; --loss:#b3352b; --tint:#eef3fc;
+  --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme:dark){
- :root:not([data-theme="light"]){
-  --bg:#17171a; --panel:#1f1f23; --ink:#ececea; --muted:#9b9b95; --line:#32323a;
-  --accent:#7fb2e5; --rep:#e0905c; --act:#7fb2e5; --gapfill:#8c9bab;
-  --good:#5fbd87; --bad:#e8745f; --warn:#d9bc63; --warnbg:#2a2516;
- }
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);
- font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
-.wrap{max-width:1180px;margin:0 auto;padding:40px 24px 80px}
-header{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:8px}
-h1{font-size:30px;line-height:1.25;margin:0 0 6px;letter-spacing:-.4px}
-.sub{color:var(--muted);font-size:15px}
-.tagline{margin-top:10px;font-size:13px;color:var(--muted)}
-h2{font-size:20px;margin:44px 0 6px;letter-spacing:-.2px}
-h2 .n{color:var(--muted);font-weight:400;margin-right:8px}
-h3{font-size:15px;margin:22px 0 8px}
-p{margin:10px 0}
-.lead{color:var(--muted);margin-top:0;margin-bottom:18px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:16px 0}
-.grid{display:grid;gap:16px}
-@media(min-width:800px){.g2{grid-template-columns:1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
-input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
- background:var(--bg);color:var(--ink);font:14px var(--mono)}
-.btn{display:inline-block;padding:6px 12px;margin:6px 6px 0 0;border:1px solid var(--line);
- border-radius:6px;background:var(--bg);color:var(--ink);font-size:13px;cursor:pointer}
-.btn:hover{border-color:var(--accent);color:var(--accent)}
-.answer{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
- border-radius:8px;padding:18px 22px;margin:16px 0}
-.answer .big{font:600 34px/1.1 var(--mono);color:var(--accent);letter-spacing:-1px}
-.answer .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
-.note{background:var(--warnbg);border:1px solid var(--line);border-left:4px solid var(--warn);
- border-radius:8px;padding:14px 18px;margin:16px 0;font-size:14px}
-.note b{color:var(--warn)}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{border-collapse:collapse;width:100%;font:13px/1.5 var(--mono);min-width:660px}
-th,td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;
- font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-weight:600;text-align:right}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --panel:#161d25; --ink:#e7ecf1; --ink-2:#a9b5c1; --ink-3:#7d8a97; --line:#27313c;
+  --reported:#6a9ef5; --actual:#9aa6b2; --gain:#4cc38a; --loss:#f07a6f; --tint:#1a2638; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --panel:#161d25; --ink:#e7ecf1; --ink-2:#a9b5c1; --ink-3:#7d8a97; --line:#27313c;
+  --reported:#6a9ef5; --actual:#9aa6b2; --gain:#4cc38a; --loss:#f07a6f; --tint:#1a2638; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding-block:32px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header{display:grid;gap:8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+h1{font-size:clamp(24px,4vw,32px);font-weight:600;line-height:1.2;margin:0;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:0;text-wrap:balance}
+.lead{max-width:68ch;color:var(--ink-2);margin:0}
+.lead b{color:var(--ink);font-weight:600}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
+thead th{font-size:12px;font-weight:500;color:var(--ink-3);letter-spacing:.03em}
+td{font-family:var(--mono);font-size:14px}
+td:first-child{font-family:var(--sans);font-weight:600}
 tbody tr:last-child td{border-bottom:none}
-tr.tot td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none}
-.pos{color:var(--good)} .neg{color:var(--bad)}
-.sc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:18px 0}
-.sc h3{margin:0 0 2px;font-size:17px}
-.sc .meta{color:var(--muted);font-size:13px;margin-bottom:14px}
-.kpis{display:flex;flex-wrap:wrap;gap:22px;margin:14px 0 4px}
-.kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.kpi .v{font:600 19px var(--mono)}
-.legend{display:flex;gap:18px;font-size:12px;color:var(--muted);margin:6px 0 10px;flex-wrap:wrap}
-.sw{display:inline-block;width:22px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
-ul{margin:10px 0;padding-left:22px} li{margin:7px 0}
-.ft{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
-code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
-.eq{font:14px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;
- padding:12px 14px;margin:12px 0;overflow-x:auto}
+.pos{color:var(--gain)} .neg{color:var(--loss)}
+.col-rep{color:var(--reported)}
+.legend{display:flex;flex-wrap:wrap;gap:18px;font-size:13px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:8px}
+.sw{width:22px;height:0;border-top:2.5px solid var(--reported)}
+.sw.act{border-top:2.5px dashed var(--actual)}
+.panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px}
+@media (max-width:760px){.panels{grid-template-columns:minmax(0,1fr)}}
+.panel{display:grid;gap:10px;align-content:start}
+.ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.chart{position:relative;height:260px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13px;color:var(--ink-2)}
+.kv b{font-family:var(--mono);font-weight:500;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--ink-2);margin:0;max-width:72ch}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px){.cols{grid-template-columns:minmax(0,1fr)}}
+ul{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--ink-2);font-size:14px}
+ul b{color:var(--ink);font-weight:600}
+.flag{background:var(--tint);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--ink-2)}
+footer{font-size:12px;color:var(--ink-3)}
+.formula{font-family:var(--mono);font-size:13px;background:var(--tint);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:pre;color:var(--ink)}
+.big{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.putgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:20px;align-items:start}
+@media (max-width:760px){.putgrid{grid-template-columns:minmax(0,1fr)}}
+.small td,.small th{padding:6px 10px}
+.small table{min-width:0}
+.bdgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px}
+@media (max-width:900px){.bdgrid{grid-template-columns:minmax(0,1fr)}}
+.bdcell{display:grid;gap:8px;min-width:0}
+h3{font-size:15px;font-weight:600;margin:0}
+table.bd{min-width:520px}
+table.bd td,table.bd th{padding:7px 8px;font-size:13px}
+table.bd tr.tot td{border-top:1.5px solid var(--ink-3);font-weight:500}
+table.bd tr.per td{color:var(--ink-2)}
+*{box-sizing:border-box} body{margin:0} a{color:var(--reported)}
 </style>
 </head>
 <body>
 <div class="wrap">
-
 <header>
-  <h1>CDPS with Put Option: Reported versus Actual</h1>
-  <div class="sub">Four-year hold. Where book reporting and economic reality diverge, and what the desk needs to know.</div>
-  <div class="tagline">Illustrative model built on round numbers. No position, counterparty or issuer data. All figures per 1 share at an entry price of 100.</div>
+  <div class="eyebrow">CDP position with put · 4-year hold · illustrative</div>
+  <h1>Reported P&amp;L tells a different story from actual P&amp;L until the day we close</h1>
+  <p class="lead">The CDPs are carried at cost and their dividends are booked as income, while the put is marked to market. Reported P&amp;L therefore leaves out every move in the CDP price until the position is sold. Over four years the two lines can sit <b>up to S$504k apart</b>, and the difference is booked in one go at close.</p>
+  <p class="note">Management summary: <a href="https://github.com/PETERDMYAN/cdps-position-model/blob/main/SUMMARY.md">SUMMARY.md</a> · Alternative reading with the 12% IRR as a contractual floor: <a href="floor.html">floor.html</a></p>
 </header>
 
-<h2><span class="n">1</span>Inputs</h2>
-<p class="lead">Every number on this page recalculates from these five inputs plus the four stock paths. Change any of them to test a different deal.</p>
-<div class="panel">
-  <div class="grid g4">
-    <div><label>Entry price / spot</label><input type="number" id="i_s0" value="100" step="1"></div>
-    <div><label>CDPS dividend (% on cost)</label><input type="number" id="i_div" value="6" step="0.25"></div>
-    <div><label>Position IRR (%)</label><input type="number" id="i_irr" value="12" step="0.25"></div>
-    <div><label>Tenor (years)</label><input type="number" id="i_n" value="4" step="1" min="1" max="10"></div>
-  </div>
-  <div class="grid g2" style="margin-top:16px">
-    <div>
-      <label>Put strike</label>
-      <input type="number" id="i_k" value="128.68" step="1">
-      <label style="text-transform:none;letter-spacing:0;margin-top:8px;font-size:13px;color:var(--ink)">
-        <input type="checkbox" id="i_lock" checked style="vertical-align:-2px;margin-right:6px">
-        Lock the strike to the level that floors the IRR at 12%
-      </label>
-      <button class="btn" id="b_prot">Unlock and set 20% below spot</button>
+<section class="box" aria-labelledby="tp" style="display:grid;gap:14px">
+  <h2 id="tp">Put price</h2>
+  <div class="putgrid">
+    <div style="display:grid;gap:6px">
+      <div class="eyebrow">Day-one value per CDP</div>
+      <div class="big">S$19.03</div>
+      <p class="note">19.0% of the S$100 CDP price, or <b>S$190.3k</b> on 10,000 units. This is PV of the CDP with the put minus the CDP market price: S$119.03 − S$100.00.</p>
+      <p class="note">The put is expensive because the 6% dividend is above the 3% rate. The 4-year forward price is S$88.69, already below the S$95 strike, so the market expects the put to finish in the money.</p>
     </div>
-    <div>
-      <label>Year-4 stock price per scenario</label>
-      <div class="grid g4">
-        <div><input type="number" id="e_A" value="160" step="5"></div>
-        <div><input type="number" id="e_B" value="100" step="5"></div>
-        <div><input type="number" id="e_C" value="90" step="5"></div>
-        <div><input type="number" id="e_D" value="60" step="5"></div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">Rises past the strike, flat, falls moderately, falls hard. Intermediate years interpolate linearly.</div>
+    <div style="display:grid;gap:10px;min-width:0">
+<div class="formula">Put = K·e^(−rT)·N(−d2) − S·e^(−qT)·N(−d1)
+    = 84.26 × 0.6508 − 78.66 × 0.4552
+    = 54.833 − 35.806 ≈ 19.03
+
+S 100 · K 95 · T 4y · r 3% · q 6% · vol 25%
+d1 = 0.113 · d2 = −0.387</div>
+      <div class="tablewrap small"><table>
+        <thead><tr><th>Volatility</th><th>15%</th><th>20%</th><th>25% (used)</th><th>30%</th></tr></thead>
+        <tbody><tr><td>Put per CDP</td><td>S$12.76</td><td>S$15.90</td><td>S$19.03</td><td>S$22.13</td></tr></tbody>
+      </table></div>
     </div>
   </div>
-</div>
+</section>
 
-<h2><span class="n">2</span>The put price</h2>
-<p class="lead">The position carries a contractual floor of 12%, so the strike is determined, not negotiated.</p>
+<section class="box" aria-labelledby="t1">
+  <h2 id="t1" style="margin-bottom:12px">At a glance, S$ thousands</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Scenario</th><th>Price at year 4</th><th>Put at year 4</th><th>Position IRR</th><th>Dividends</th><th>Reported before close</th><th>Booked at close</th><th>Final P&amp;L</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table></div>
+</section>
 
-<div class="answer">
-  <div class="lbl">Put strike: the year-4 value that floors the position IRR at 12%</div>
-  <div class="big" id="a_k">128.68</div>
-  <div style="margin-top:10px;font-size:14px" id="a_expl"></div>
-</div>
+<section class="box" aria-labelledby="t2" style="display:grid;gap:14px">
+  <div class="ph"><h2 id="t2">P&amp;L over time by scenario</h2>
+    <div class="legend"><span><i class="sw"></i>Reported (dividends + put MTM, CDP at cost)</span><span><i class="sw act"></i>Actual (CDP at market + dividends + put)</span></div></div>
+  <div class="panels" id="panels"></div>
+  <p class="note">X axis is years. All four charts use the same scale. The vertical jump in the blue line at year 4 is the CDP gain or loss realized when the position is closed; after it, reported and actual are the same number.</p>
+</section>
 
-<p>The position pays <span id="t_div">6.00</span> a year for <span id="t_n">4</span> years and nothing else until close, so the terminal value carries the rest of the return:</p>
-<div class="eq" id="eq_main"></div>
-
-<div class="note">
-  <b>A cash premium cannot be computed from these inputs.</b>
-  A Black-Scholes put premium needs volatility, the risk-free rate and the exercise style, none of which were given. What the inputs do pin down is the strike at which the put turns 12% from a target into a floor. If you want the traded premium instead, give me implied volatility and the rate and I will price it.
-</div>
-
-<div class="note">
-  <b>The strike sits <span id="t_kprem">28.7%</span> above spot, and that is the point.</b>
-  A floor of <span id="t_kfloor">128.68</span> is what 12% costs when the dividend only delivers
-  <span id="t_divpct2">6%</span>. The stock starts below the strike and stays there in three of the four
-  scenarios, so the put is exercised and the position returns exactly 12%. Only a rally past
-  <span id="t_kfloor2">128.68</span> beats the floor. The put is not tail protection here. It is the
-  main source of return.
-</div>
-
-<h2><span class="n">3</span>Carrying value accretion</h2>
-<p class="lead">The book value of the whole position grows at the deal IRR and is reduced by each dividend paid. This schedule is fixed at trade date and does not move with the stock.</p>
-<div class="panel scroll"><table id="tb_acc"></table></div>
-
-<h2><span class="n">4</span>How each leg is reported</h2>
-<div class="grid g2">
-  <div class="panel">
-    <h3>CDPS dividend, carried at cost</h3>
-    <p>Income is recognised yearly at the coupon on original cost. It is <b>the same number in every scenario and every year</b>, so it carries no information about how the position is actually doing.</p>
-    <div class="eq">dividend income = cost &times; <span id="t_divpct">6%</span> = <span id="t_div2">6.00</span> per year</div>
-  </div>
-  <div class="panel">
-    <h3>Put option, marked to market</h3>
-    <p>Carrying value is the accreted position value less the stock price, as specified. Each year's reported option result is the change in that carrying value.</p>
-    <div class="eq">option carrying value = PV(CDPS with option) &minus; stock price<br>option P&amp;L = carrying value this year &minus; last year</div>
-    <p style="margin-bottom:0"><b>The stock price enters this formula with a minus sign.</b> That single detail drives everything in section 5.</p>
-  </div>
-</div>
-
-<h2><span class="n">5</span>Four scenarios</h2>
-<p class="lead">Each chart plots cumulative result by year. Reported follows the two rules above.
-Actual is cash dividends received plus the change in economic value, where economic value is the
-greater of the stock price and the guaranteed value of the position at that date.</p>
-
-<div class="note">
-  <b>Three of the four scenarios are the same deal.</b>
-  Because the floor binds whenever the stock ends below the strike, B, C and D all settle at
-  <span id="t_k3">128.68</span> and all return exactly 12%. Their economics are identical. Everything
-  that differs between those three charts is reporting, not performance.
-</div>
-<div class="legend">
-  <span><span class="sw" style="background:var(--rep)"></span>Reported, cumulative</span>
-  <span><span class="sw" style="background:var(--act)"></span>Actual, cumulative</span>
-  <span><span class="sw" style="background:var(--gapfill);opacity:.4;height:10px"></span>Divergence</span>
-</div>
-
-<div class="panel">
-  <h3 style="margin-top:0">Where the four scenarios land after four years</h3>
-  <p style="color:var(--muted);font-size:13px;margin-top:0">
-    The blue bars are flat across B, C and D because the floor pays the same in all three.
-    The orange bars are not: reported earnings climb as the stock falls, purely from the marking
-    convention.</p>
-  <div id="overview"></div>
-</div>
-
-<div id="scenarios"></div>
-
-<h2><span class="n">6</span>Summary for management</h2>
-<div class="panel" id="summary"></div>
-
-<h2><span class="n">7</span>What the desk needs to know</h2>
-<div class="panel" id="trader"></div>
-
-<h2><span class="n">8</span>Assumptions to confirm</h2>
-<div class="panel">
-  <ul>
-    <li><b>Put strike level.</b> Set to the level that floors the position IRR at 12%, per the deal
-      terms. Unlock the input above to test a different strike.</li>
-    <li><b>Terminal payoff.</b> Modelled as the greater of the stock price and the strike at year 4, settled once, with no early exercise and no knock-out.</li>
-    <li><b>Economic value between trade and close.</b> Modelled as the greater of the stock price
-      and the contractually guaranteed value at that date, because no volatility was supplied. A full
-      option mark would smooth the actual line but would not change its direction or the gap at close.</li>
-    <li><b>Dividend certainty.</b> Modelled as paid in full and in cash every year. A deferral or a payment in kind would break the accretion schedule as well as the income line.</li>
-    <li><b>No counterparty reserve.</b> The put is assumed to pay in full. Since the floor carries
-      the return in three of the four scenarios, this is the single largest unmodelled risk on the page.</li>
-  </ul>
-</div>
-
-<div class="ft">
-  Illustrative model. Figures are generated in the browser from the inputs above, rounded for display and computed at full precision. Not investment advice and not an accounting opinion. Confirm the treatment with Technical Accounting before anything here reaches a book.
-</div>
-
-</div>
-
-<script>
-const $ = id => document.getElementById(id);
-const f2 = x => (Math.abs(x) < 5e-11 ? 0 : x).toFixed(2);
-const sgn = x => (x >= 0 ? '+' : '') + f2(x);
-const cls = x => x > 1e-9 ? 'pos' : (x < -1e-9 ? 'neg' : '');
-
-function irr(cfs){
-  let lo = -0.9999, hi = 10;
-  for (let i = 0; i < 300; i++){
-    const m = (lo + hi) / 2;
-    let npv = 0;
-    for (let j = 0; j < cfs.length; j++) npv += cfs[j] / Math.pow(1 + m, j);
-    if (npv > 0) lo = m; else hi = m;
-  }
-  return (lo + hi) / 2;
-}
-
-const SCEN = [
-  {id:'A', name:'Stock rises above the strike', short:'Rises past strike',
-   tone:'The only scenario that beats the floor. Put expires worthless and the upside is kept.'},
-  {id:'B', name:'Stock flat', short:'Flat',
-   tone:'Below the strike, so the put is exercised and the floor pays.'},
-  {id:'C', name:'Stock falls moderately', short:'Falls moderately',
-   tone:'Below the strike. Identical economics to B: the floor pays.'},
-  {id:'D', name:'Stock falls hard', short:'Falls hard',
-   tone:'Still below the strike. Identical economics to B and C: the floor pays.'}
-];
-
-function model(){
-  const S0 = +$('i_s0').value, dpc = +$('i_div').value/100, r = +$('i_irr').value/100;
-  const N = Math.max(1, Math.min(10, Math.round(+$('i_n').value)));
-  const div = S0 * dpc;
-
-  const pv = [S0];
-  for (let t = 1; t <= N; t++) pv.push(pv[t-1] * (1 + r) - div);
-  const kIrr = pv[N];
-
-  const locked = $('i_lock').checked;
-  const K = locked ? kIrr : +$('i_k').value;
-
-  // value the position is contractually guaranteed at each date: remaining dividends plus the
-  // floor, discounted at the deal IRR. Equals the accretion schedule when the strike is the floor.
-  const floorPV = [];
-  for (let t = 0; t <= N; t++){
-    let v = K / Math.pow(1 + r, N - t);
-    for (let j = t + 1; j <= N; j++) v += div / Math.pow(1 + r, j - t);
-    floorPV.push(v);
-  }
-
-  const paths = {};
-  for (const s of SCEN){
-    const end = +$('e_' + s.id).value, p = [S0];
-    for (let t = 1; t <= N; t++) p.push(S0 + (end - S0) * t / N);
-    paths[s.id] = p;
-  }
-  return {S0, dpc, r, N, K, div, pv, kIrr, floorPV, locked, paths};
-}
-
-function rows(m, path){
-  const out = [];
-  let cumR = 0, cumA = 0;
-  let prevCV = m.pv[0] - path[0];
-  let prevEV = Math.max(path[0], m.floorPV[0]);
-  for (let t = 1; t <= m.N; t++){
-    const cv = m.pv[t] - path[t];
-    const repOpt = cv - prevCV;
-    const repTot = m.div + repOpt;
-    const ev = Math.max(path[t], m.floorPV[t]);
-    const actTot = m.div + (ev - prevEV);
-    cumR += repTot; cumA += actTot;
-    out.push({t, S:path[t], pv:m.pv[t], cv, repDiv:m.div, repOpt, repTot, cumR, ev, actTot, cumA});
-    prevCV = cv; prevEV = ev;
-  }
-  return out;
-}
-
-const MONO = 'ui-monospace,SFMono-Regular,Menlo,monospace';
-const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
-
-function niceTicks(lo, hi, n){
-  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
-  const norm = raw / mag;
-  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
-  const out = [];
-  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(v);
-  return out;
-}
-
-function chart(rs){
-  const W = 780, H = 340, L = 64, R = 104, T = 30, B = 56;
-  const pts = [{t:0, cumR:0, cumA:0}, ...rs];
-  const last = pts[pts.length - 1];
-  const vals = pts.flatMap(d => [d.cumR, d.cumA]).concat(0);
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  if (hi - lo < 1){ hi += 1; lo -= 1; }
-  const pad = (hi - lo) * 0.18; lo -= pad; hi += pad;
-  const X = t => L + (W - L - R) * t / last.t;
-  const Y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
-
-  let g = '';
-  for (const v of niceTicks(lo, hi, 5)){
-    const y = Y(v);
-    g += `<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`
-       + `<text x="${L-10}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--muted)"
-          font-family="${MONO}">${v.toFixed(0)}</text>`;
-  }
-
-  // shaded band between the two lines: the divergence
-  const band = `<polygon points="${pts.map(d => X(d.t)+','+Y(d.cumA)).join(' ')} `
-    + `${pts.slice().reverse().map(d => X(d.t)+','+Y(d.cumR)).join(' ')}"
-       fill="var(--gapfill)" opacity="0.16"/>`;
-
-  const zero = `<line x1="${L}" y1="${Y(0)}" x2="${W-R}" y2="${Y(0)}"
-    stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4" opacity=".75"/>`;
-
-  const line = (key, col) =>
-    `<polyline points="${pts.map(d => X(d.t)+','+Y(d[key])).join(' ')}" fill="none"
-      stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`
-    + pts.map(d => `<circle cx="${X(d.t)}" cy="${Y(d[key])}" r="4.6" fill="var(--panel)"
-        stroke="${col}" stroke-width="2.6"/>`).join('');
-
-  // value labels: whichever series is higher at that year gets the label above
-  const labels = pts.map(d => {
-    const aUp = d.cumA >= d.cumR;
-    const mk = (v, col, up) => `<text x="${X(d.t)}" y="${Y(v) + (up ? -14 : 22)}"
-      text-anchor="middle" font-size="12" font-weight="600" fill="${col}"
-      font-family="${MONO}">${sgn(v)}</text>`;
-    return mk(d.cumA, 'var(--act)', aUp) + mk(d.cumR, 'var(--rep)', !aUp);
-  }).join('');
-
-  const ends = `<text x="${W-R+12}" y="${Y(last.cumA)+4}" font-size="13" font-weight="700"
-      fill="var(--act)" font-family="${SANS}">Actual</text>
-    <text x="${W-R+12}" y="${Y(last.cumR)+4}" font-size="13" font-weight="700"
-      fill="var(--rep)" font-family="${SANS}">Reported</text>`;
-
-  const xl = pts.map(d => `<text x="${X(d.t)}" y="${H-28}" text-anchor="middle" font-size="12"
-    fill="var(--muted)" font-family="${MONO}">${d.t}</text>`).join('')
-    + `<text x="${(L + W - R)/2}" y="${H-8}" text-anchor="middle" font-size="12"
-       fill="var(--muted)" font-family="${SANS}">Year</text>`;
-
-  const yTitle = `<text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
-    font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative, per share</text>`;
-
-  return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
-    style="min-width:620px;display:block" role="img"
-    aria-label="Cumulative reported versus actual result by year">
-    ${g}${band}${zero}${line('cumR','var(--rep)')}${line('cumA','var(--act)')}
-    ${labels}${ends}${xl}${yTitle}
-  </svg></div>`;
-}
-
-function overview(res, m){
-  const W = 780, H = 330, L = 64, R = 20, T = 30, B = 86;
-  const ids = SCEN.map(s => s.id);
-  const vals = ids.flatMap(id => [res[id].last.cumR, res[id].last.cumA]).concat(0);
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  const pad = (hi - lo) * 0.16; lo -= pad; hi += pad;
-  const X0 = L, XW = W - L - R;
-  const Y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
-  const slot = XW / ids.length, bw = Math.min(54, slot * 0.3);
-
-  let g = '';
-  for (const v of niceTicks(lo, hi, 5)){
-    const y = Y(v);
-    g += `<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`
-       + `<text x="${L-10}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--muted)"
-          font-family="${MONO}">${v.toFixed(0)}</text>`;
-  }
-  const y0 = Y(0);
-  g += `<line x1="${L}" y1="${y0}" x2="${W-R}" y2="${y0}" stroke="var(--muted)" stroke-width="1.5"/>`;
-
-  let bars = '';
-  ids.forEach((id, i) => {
-    const cx = X0 + slot * (i + 0.5);
-    const pair = [
-      {v: res[id].last.cumR, col: 'var(--rep)', dx: -bw - 4},
-      {v: res[id].last.cumA, col: 'var(--act)', dx: 4}
-    ];
-    for (const p of pair){
-      const y = Y(Math.max(p.v, 0)), h = Math.abs(Y(p.v) - y0);
-      bars += `<rect x="${cx + p.dx}" y="${y}" width="${bw}" height="${Math.max(h, 1.5)}"
-        fill="${p.col}" rx="2"/>`
-        + `<text x="${cx + p.dx + bw/2}" y="${p.v >= 0 ? y - 8 : y + h + 17}" text-anchor="middle"
-           font-size="12" font-weight="700" fill="${p.col}" font-family="${MONO}">${sgn(p.v)}</text>`;
-    }
-    bars += `<text x="${cx}" y="${H-52}" text-anchor="middle" font-size="13" font-weight="700"
-        fill="var(--ink)" font-family="${SANS}">${id}</text>`
-      + `<text x="${cx}" y="${H-34}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
-         font-family="${SANS}">${SCEN[i].short}</text>`
-      + `<text x="${cx}" y="${H-16}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
-         font-family="${MONO}">IRR ${f2(res[id].ir)}%</text>`;
-  });
-
-  return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
-    style="min-width:640px;display:block" role="img"
-    aria-label="Cumulative reported versus actual at close, four scenarios">
-    ${g}${bars}
-    <text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
-      font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative at close, per share</text>
-  </svg></div>`;
-}
-
-function table(rs, m){
-  const head = `<thead><tr>
-    <th>Year</th><th>Stock</th><th>Carrying PV</th><th>Option CV</th>
-    <th>Rep. dividend</th><th>Rep. option</th><th>Rep. total</th><th>Cum. rep.</th>
-    <th>Actual total</th><th>Cum. actual</th><th>Gap</th></tr></thead>`;
-  const body = rs.map(d => `<tr>
-    <td>${d.t}</td><td>${f2(d.S)}</td><td>${f2(d.pv)}</td>
-    <td class="${cls(d.cv)}">${f2(d.cv)}</td>
-    <td>${f2(d.repDiv)}</td>
-    <td class="${cls(d.repOpt)}">${sgn(d.repOpt)}</td>
-    <td class="${cls(d.repTot)}">${sgn(d.repTot)}</td>
-    <td class="${cls(d.cumR)}">${sgn(d.cumR)}</td>
-    <td class="${cls(d.actTot)}">${sgn(d.actTot)}</td>
-    <td class="${cls(d.cumA)}">${sgn(d.cumA)}</td>
-    <td class="${cls(d.cumR - d.cumA)}">${sgn(d.cumR - d.cumA)}</td></tr>`).join('');
-  const last = rs[rs.length-1];
-  const tot = `<tr class="tot">
-    <td>Total</td><td></td><td></td><td></td>
-    <td>${f2(m.div * m.N)}</td>
-    <td class="${cls(last.cv)}">${sgn(last.cv)}</td>
-    <td class="${cls(last.cumR)}">${sgn(last.cumR)}</td>
-    <td class="${cls(last.cumR)}">${sgn(last.cumR)}</td>
-    <td class="${cls(last.cumA)}">${sgn(last.cumA)}</td>
-    <td class="${cls(last.cumA)}">${sgn(last.cumA)}</td>
-    <td class="${cls(last.cumR - last.cumA)}">${sgn(last.cumR - last.cumA)}</td></tr>`;
-  return `<div class="scroll"><table>${head}<tbody>${body}${tot}</tbody></table></div>`;
-}
-
-function render(){
-  const m = model();
-  const pct = (m.kIrr / m.S0 - 1) * 100;
-
-  $('a_k').textContent = f2(m.kIrr);
-  $('a_expl').innerHTML = `Put the position back at <b>${f2(m.kIrr)}</b> in year ${m.N} and the ` +
-    `${f2(m.r*100)}% IRR is contractually locked. That is ${f2(pct)}% above the entry price of ` +
-    `${f2(m.S0)}: the dividend delivers ${f2(m.dpc*100)}% and the strike has to carry the ` +
-    `remaining ${f2(m.r*100 - m.dpc*100)}%.`;
-  $('t_div').textContent = f2(m.div);
-  $('t_div2').textContent = f2(m.div);
-  $('t_divpct').textContent = f2(m.dpc*100) + '%';
-  $('t_n').textContent = m.N;
-  $('t_kfloor').textContent = f2(m.K);
-  $('t_kfloor2').textContent = f2(m.K);
-  $('t_k3').textContent = f2(m.K);
-  $('t_divpct2').textContent = f2(m.dpc*100) + '%';
-  $('t_kprem').textContent = f2(pct) + '%';
-  if (m.locked) $('i_k').value = m.kIrr.toFixed(2);
-  $('i_k').disabled = m.locked;
-
-  const af = (1 - Math.pow(1 + m.r, -m.N)) / m.r;
-  $('eq_main').innerHTML =
-    `${f2(m.S0)} = ${f2(m.div)} &times; annuity(${f2(m.r*100)}%, ${m.N}y) + K / (1 + ${f2(m.r*100)}%)<sup>${m.N}</sup><br>` +
-    `${f2(m.S0)} = ${f2(m.div * af)} + K / ${(Math.pow(1+m.r, m.N)).toFixed(4)}<br>` +
-    `K = <b>${f2(m.kIrr)}</b>`;
-
-  let acc = `<thead><tr><th>Year</th>` +
-    Array.from({length:m.N+1}, (_,t) => `<th>${t}</th>`).join('') + `</tr></thead><tbody>`;
-  acc += `<tr><td>Carrying value PV</td>` +
-    m.pv.map(v => `<td>${f2(v)}</td>`).join('') + `</tr>`;
-  acc += `<tr><td>Dividend paid</td><td>&mdash;</td>` +
-    Array.from({length:m.N}, () => `<td>${f2(m.div)}</td>`).join('') + `</tr></tbody>`;
-  $('tb_acc').innerHTML = acc;
-
-  const res = {};
-  for (const s of SCEN){
-    const path = m.paths[s.id], rs = rows(m, path);
-    const term = Math.max(path[m.N], m.K);
-    const cfs = [-m.S0];
-    for (let t = 1; t <= m.N; t++) cfs.push(m.div + (t === m.N ? term : 0));
-    res[s.id] = {rs, last: rs[rs.length-1], term, ir: irr(cfs) * 100, path};
-  }
-  $('overview').innerHTML = overview(res, m);
-
-  let html = '';
-  for (const s of SCEN){
-    const {rs, last, term, ir, path} = res[s.id];
-
-    const dirR = last.cumR >= 0 ? 'gain' : 'loss';
-    const dirA = last.cumA >= 0 ? 'gain' : 'loss';
-    const flip = (last.cumR >= 0) !== (last.cumA >= 0);
-
-    html += `<div class="sc">
-      <h3>${s.id}. ${s.name}</h3>
-      <div class="meta">${s.tone} Stock ${f2(m.S0)} to ${f2(path[m.N])} over ${m.N} years.
-        Terminal settlement ${f2(term)}.</div>
-      <div class="kpis">
-        <div class="kpi"><div class="k">Cumulative reported</div>
-          <div class="v ${cls(last.cumR)}">${sgn(last.cumR)}</div></div>
-        <div class="kpi"><div class="k">Cumulative actual</div>
-          <div class="v ${cls(last.cumA)}">${sgn(last.cumA)}</div></div>
-        <div class="kpi"><div class="k">Gap at close</div>
-          <div class="v ${cls(last.cumR-last.cumA)}">${sgn(last.cumR-last.cumA)}</div></div>
-        <div class="kpi"><div class="k">Realised IRR</div>
-          <div class="v">${f2(ir)}%</div></div>
-      </div>
-      ${chart(rs)}
-      ${table(rs, m)}
-      <p style="font-size:13px;color:var(--muted);margin-bottom:0">
-        Books show a ${dirR} of ${f2(Math.abs(last.cumR))}; the position actually made a
-        ${dirA} of ${f2(Math.abs(last.cumA))}.
-        ${flip ? '<b>The two carry opposite signs.</b>' : ''}
-        A true-up of ${sgn(last.cumA - last.cumR)} lands in the closing period.</p>
-    </div>`;
-  }
-  $('scenarios').innerHTML = html;
-
-  const A = res.A, D = res.D;
-  const gapFloor = m.S0 - D.path[m.N];
-  $('summary').innerHTML = `
-    <p><b>The position returns 12% in three of our four scenarios, and the books report four
-    different numbers.</b> B, C and D all settle at the floor of ${f2(m.K)} and all return exactly
-    ${f2(m.r*100)}%. They are the same deal. Reported earnings across those three range from
-    ${sgn(res.B.last.cumR)} to ${sgn(res.D.last.cumR)}, a spread of
-    ${f2(res.D.last.cumR - res.B.last.cumR)} per share that corresponds to no difference in
-    economics at all.</p>
-
-    <p><b>The stock move is booked once, with the wrong sign, and never where it belongs.</b>
-    The option carrying value is the accreted value minus the stock price, so a falling stock
-    inflates reported earnings. Meanwhile the CDPS is carried at cost, so the stock's decline is
-    never recognised on the asset itself. The result is that reported earnings exceed economics by
-    exactly the unrecognised stock move: ${sgn(gapFloor)} in scenario D, where the stock fell from
-    ${f2(m.S0)} to ${f2(D.path[m.N])}.</p>
-
-    <p><b>Reported is only correct when the stock ends exactly where it started.</b>
-    In scenario B the stock closes at ${f2(res.B.path[m.N])} and reported matches economics to the
-    cent. Move the terminal price in either direction and the two separate immediately. That is a
-    coincidence, not a control.</p>
-
-    <p><b>The rally case is the worst reported outcome and the best real one.</b>
-    If the stock reaches ${f2(A.path[m.N])}, the position earns ${sgn(A.last.cumA)} and returns
-    ${f2(A.ir)}%, while the books show ${sgn(A.last.cumR)} across the ${m.N} years. The divergence
-    runs at twice the stock move here, because the rally is subtracted through the option plug and
-    added through economics at the same time. The gap reaches ${sgn(A.last.cumR - A.last.cumA)}.</p>
-
-    <p><b>Nothing corrects before settlement.</b>
-    The whole difference arrives as a single true-up in the closing period, up to
-    ${sgn(A.last.cumA - A.last.cumR)} per share. On any meaningful size that is a P&L event we
-    should be explaining in advance, not at settlement.</p>
-
-    <p><b>What I would ask for.</b>
-    Confirmation from Technical Accounting that a cost-carried CDPS plus an option plug defined as
-    accreted value minus spot is the agreed treatment, given that it leaves the stock unmarked. A
-    view on whether the position is better presented as what it economically is, a ${f2(m.r*100)}%
-    instrument plus a call struck at ${f2(m.K)}. And a decision on forecasting and disclosing the
-    closing true-up well ahead of the period it lands in.</p>`;
-
-  $('trader').innerHTML = `
+<section class="box" aria-labelledby="t5" style="display:grid;gap:14px">
+  <div style="display:grid;gap:6px"><h2 id="t5">How it is reported, by year and in total</h2>
+  <p class="note">S$ thousands unless marked. Reported = CDP dividend + CDP option MTM + CDP gain or loss realized at close. Actual adds the CDP price change in the year it happens. Totals over the four years are the same in both views.</p></div>
+  <div class="bdgrid"><div class='bdcell'><h3>Price rises</h3><div class='tablewrap'><table class='bd'><thead><tr><th>Period</th><th>CDP dividend</th><th>CDP option MTM</th><th>CDP sold at close</th><th>Reported</th><th>Actual</th></tr></thead><tbody><tr><td>Year 1</td><td>+64.0</td><td class='neg'>−63.4</td><td class=''>–</td><td class='col-rep'>+0.6</td><td>+108.1</td></tr><tr><td>Year 2</td><td>+70.9</td><td class='neg'>−63.9</td><td class=''>–</td><td class='col-rep'>+6.9</td><td>+125.9</td></tr><tr><td>Year 3</td><td>+78.5</td><td class='neg'>−50.9</td><td class=''>–</td><td class='col-rep'>+27.5</td><td>+159.3</td></tr><tr><td>Year 4</td><td>+86.9</td><td class='neg'>−12.0</td><td class='pos'>+504.2</td><td class='col-rep'>+579.0</td><td>+220.8</td></tr><tr class='tot'><td>Total, S$k</td><td>+300.2</td><td class='neg'>−190.3</td><td class='pos'>+504.2</td><td class='col-rep'>+614.1</td><td>+614.1</td></tr><tr class='per'><td>Per CDP, S$</td><td>+30.02</td><td>−19.03</td><td>+50.42</td><td class='col-rep'>+61.41</td><td>+61.41</td></tr></tbody></table></div></div><div class='bdcell'><h3>Price unchanged</h3><div class='tablewrap'><table class='bd'><thead><tr><th>Period</th><th>CDP dividend</th><th>CDP option MTM</th><th>CDP sold at close</th><th>Reported</th><th>Actual</th></tr></thead><tbody><tr><td>Year 1</td><td>+60.0</td><td class='neg'>−27.2</td><td class=''>–</td><td class='col-rep'>+32.8</td><td>+32.8</td></tr><tr><td>Year 2</td><td>+60.0</td><td class='neg'>−34.1</td><td class=''>–</td><td class='col-rep'>+25.9</td><td>+25.9</td></tr><tr><td>Year 3</td><td>+60.0</td><td class='neg'>−45.8</td><td class=''>–</td><td class='col-rep'>+14.2</td><td>+14.2</td></tr><tr><td>Year 4</td><td>+60.0</td><td class='neg'>−83.1</td><td class=''>–</td><td class='col-rep'>−23.1</td><td>−23.1</td></tr><tr class='tot'><td>Total, S$k</td><td>+240.0</td><td class='neg'>−190.3</td><td class=''>–</td><td class='col-rep'>+49.7</td><td>+49.7</td></tr><tr class='per'><td>Per CDP, S$</td><td>+24.00</td><td>−19.03</td><td>–</td><td class='col-rep'>+4.97</td><td>+4.97</td></tr></tbody></table></div></div><div class='bdcell'><h3>Price falls, stays above strike</h3><div class='tablewrap'><table class='bd'><thead><tr><th>Period</th><th>CDP dividend</th><th>CDP option MTM</th><th>CDP sold at close</th><th>Reported</th><th>Actual</th></tr></thead><tbody><tr><td>Year 1</td><td>+59.6</td><td class='neg'>−23.4</td><td class=''>–</td><td class='col-rep'>+36.2</td><td>+26.2</td></tr><tr><td>Year 2</td><td>+59.0</td><td class='neg'>−30.0</td><td class=''>–</td><td class='col-rep'>+29.0</td><td>+19.1</td></tr><tr><td>Year 3</td><td>+58.4</td><td class='neg'>−41.4</td><td class=''>–</td><td class='col-rep'>+17.0</td><td>+7.2</td></tr><tr><td>Year 4</td><td>+57.9</td><td class='neg'>−95.4</td><td class='neg'>−39.4</td><td class='col-rep'>−77.0</td><td>−47.3</td></tr><tr class='tot'><td>Total, S$k</td><td>+234.9</td><td class='neg'>−190.3</td><td class='neg'>−39.4</td><td class='col-rep'>+5.3</td><td>+5.3</td></tr><tr class='per'><td>Per CDP, S$</td><td>+23.49</td><td>−19.03</td><td>−3.94</td><td class='col-rep'>+0.53</td><td>+0.53</td></tr></tbody></table></div></div><div class='bdcell'><h3>Price falls below strike</h3><div class='tablewrap'><table class='bd'><thead><tr><th>Period</th><th>CDP dividend</th><th>CDP option MTM</th><th>CDP sold at close</th><th>Reported</th><th>Actual</th></tr></thead><tbody><tr><td>Year 1</td><td>+55.9</td><td class='pos'>+17.7</td><td class=''>–</td><td class='col-rep'>+73.6</td><td>−33.8</td></tr><tr><td>Year 2</td><td>+49.9</td><td class='pos'>+22.2</td><td class=''>–</td><td class='col-rep'>+72.1</td><td>−23.8</td></tr><tr><td>Year 3</td><td>+44.5</td><td class='pos'>+31.4</td><td class=''>–</td><td class='col-rep'>+76.0</td><td>−9.6</td></tr><tr><td>Year 4</td><td>+39.8</td><td class='pos'>+53.8</td><td class='neg'>−365.4</td><td class='col-rep'>−271.8</td><td>+17.1</td></tr><tr class='tot'><td>Total, S$k</td><td>+190.1</td><td class='pos'>+125.1</td><td class='neg'>−365.4</td><td class='col-rep'>−50.2</td><td>−50.2</td></tr><tr class='per'><td>Per CDP, S$</td><td>+19.01</td><td>+12.51</td><td>−36.54</td><td class='col-rep'>−5.02</td><td>−5.02</td></tr></tbody></table></div></div></div>
+</section>
+<div class="cols">
+  <section class="box" aria-labelledby="t3" style="display:grid;gap:10px">
+    <h2 id="t3">What the charts show</h2>
     <ul>
-      <li><b>Economically this is a ${f2(m.r*100)}% instrument plus a call, not a protected equity
-        position.</b> The floor pays in every scenario except a rally past ${f2(m.K)}, which is
-        ${f2((m.K/m.S0-1)*100)}% above spot. Risk and hedging should be framed off that, not off the
-        ${f2(m.S0)} entry price.</li>
-      <li><b>Reported option P&L is the stock price with a minus sign.</b> Carrying value is accreted
-        value minus spot, so it restates the stock rather than measuring the option. Read as exposure
-        it points the wrong way. Risk has to come off the economic line.</li>
-      <li><b>Hedging the stock will destabilise the book, not steady it.</b> A short hedge into a
-        rally loses at the same moment the option plug reports a loss. The two compound. Expect
-        reported swings of roughly the full notional delta with the sign reversed.</li>
-      <li><b>Only the rally scenario carries real variance.</b> Below ${f2(m.K)} the payoff is fixed,
-        so every move in reported earnings across B, C and D is accounting noise. Flagging those
-        swings as risk events will waste attention; the genuine question is the probability of
-        finishing above ${f2(m.K)}.</li>
-      <li><b>Forecast the closing true-up from year ${Math.max(1, m.N-1)}.</b> It is deterministic
-        once the terminal price is known and runs to ${sgn(A.last.cumA - A.last.cumR)} per share in
-        the rally case.</li>
-      <li><b>The floor is only as good as the writer.</b> Three of four scenarios depend entirely on
-        the put paying. If the writer is connected to the stock that is falling, the protection is
-        worth least exactly when it is needed, and nothing in the reporting flags that.</li>
-      <li><b>Dividend risk hits twice.</b> A suspension stops the income line and invalidates the
-        accretion schedule at the same time, which also moves the strike that floors the IRR.</li>
-    </ul>`;
-}
-
-for (const id of ['i_s0','i_div','i_irr','i_n','i_k','e_A','e_B','e_C','e_D'])
-  $(id).addEventListener('input', render);
-$('i_lock').addEventListener('change', render);
-$('b_prot').addEventListener('click', () => {
-  $('i_lock').checked = false;
-  $('i_k').disabled = false;
-  $('i_k').value = (+$('i_s0').value * 0.8).toFixed(2);
-  render();
-});
-render();
+      <li><b>Up:</b> for two years reported P&amp;L is close to zero, because put losses eat the dividends, while the position has actually made over S$230k. The S$504k CDP gain only appears at close.</li>
+      <li><b>Flat:</b> the two lines match. Dividends carry the result; put decay is heaviest in year 4, so reported P&amp;L falls from S$73k to S$50k in the last year.</li>
+      <li><b>Down, above the strike:</b> the put expires worthless. Reported P&amp;L peaks at S$83k early in year 4, then the put loss and a S$39k CDP loss at close leave only S$5k. This is the weakest outcome after the deep fall, because the protection was paid for and never used.</li>
+      <li><b>Down, below the strike:</b> reported P&amp;L climbs to S$315k because the put gains and dividends are booked but the CDP loss is not. Closing books a S$365k loss in one day and the result turns to −S$50k. The put caps the loss.</li>
+    </ul>
+  </section>
+  <section class="box" aria-labelledby="t4" style="display:grid;gap:10px">
+    <h2 id="t4">Assumptions</h2>
+    <ul>
+      <li>10,000 CDP units bought at S$100 (S$1.0m), held 4 years and sold at the end of year 4</li>
+      <li>Dividends 6% a year on the market price, paid quarterly, booked as income</li>
+      <li>Put value = PV of CDPs with the put − CDP market price, priced with Black-Scholes as above and marked quarterly</li>
+      <li>Up case price path set so the whole position earns a 12% IRR (+10.7% a year); the deep fall is the mirror (−10.7% a year); the mild fall is −1% a year, ending at S$96.06, just above the strike</li>
+    </ul>
+    <div class="flag">The put cost of 19% of notional drives the size of every number here. Replace volatility and strike with the actual trade terms before using the figures externally.</div>
+  </section>
+</div>
+<footer>Illustrative simulation, not accounting advice. Prepared 7 Nov 2026.</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const D = {"Up": {"rep": [[0.0, 0.0], [0.25, -0.1], [0.5, -0.0], [0.75, 0.2], [1.0, 0.6], [1.25, 1.4], [1.5, 2.7], [1.75, 4.7], [2.0, 7.5], [2.25, 11.6], [2.5, 17.2], [2.75, 24.8], [3.0, 35.1], [3.25, 48.7], [3.5, 66.3], [3.75, 87.4], [4.0, 109.9], [4, 614.1]], "act": [[0.0, 0.0], [0.25, 25.8], [0.5, 52.3], [0.75, 79.7], [1.0, 108.1], [1.25, 137.5], [1.5, 168.1], [1.75, 200.2], [2.0, 234.0], [2.25, 269.7], [2.5, 307.8], [2.75, 348.8], [3.0, 393.3], [3.25, 442.0], [3.5, 495.6], [3.75, 553.7], [4.0, 614.1]], "price": 150.42, "g": 10.7, "irr": 12.0, "pre": 109.9, "real": 504.2, "fin": 614.1, "div": 300.2, "gap": 504.2, "putend": 0, "peak": 109.9}, "Flat": {"rep": [[0.0, 0.0], [0.25, 8.7], [0.5, 17.1], [0.75, 25.1], [1.0, 32.8], [1.25, 40.0], [1.5, 46.8], [1.75, 53.0], [2.0, 58.6], [2.25, 63.6], [2.5, 67.7], [2.75, 70.9], [3.0, 72.8], [3.25, 73.1], [3.5, 71.0], [3.75, 64.6], [4.0, 49.7], [4, 49.7]], "act": [[0.0, 0.0], [0.25, 8.7], [0.5, 17.1], [0.75, 25.1], [1.0, 32.8], [1.25, 40.0], [1.5, 46.8], [1.75, 53.0], [2.0, 58.6], [2.25, 63.6], [2.5, 67.7], [2.75, 70.9], [3.0, 72.8], [3.25, 73.1], [3.5, 71.0], [3.75, 64.6], [4.0, 49.7]], "price": 100.0, "g": 0.0, "irr": 1.1, "pre": 49.7, "real": 0.0, "fin": 49.7, "div": 240.0, "gap": 0.0, "putend": 0, "peak": 73.1}, "Mild": {"rep": [[0.0, 0.0], [0.25, 9.6], [0.5, 18.8], [0.75, 27.7], [1.0, 36.2], [1.25, 44.2], [1.5, 51.8], [1.75, 58.8], [2.0, 65.2], [2.25, 71.0], [2.5, 75.8], [2.75, 79.7], [3.0, 82.2], [3.25, 83.1], [3.5, 81.2], [3.75, 74.6], [4.0, 44.7], [4, 5.3]], "act": [[0.0, 0.0], [0.25, 7.1], [0.5, 13.8], [0.75, 20.2], [1.0, 26.2], [1.25, 31.8], [1.5, 36.8], [1.75, 41.4], [2.0, 45.3], [2.25, 48.6], [2.5, 51.0], [2.75, 52.4], [3.0, 52.5], [3.25, 50.9], [3.5, 46.7], [3.75, 37.6], [4.0, 5.3]], "price": 96.06, "g": -1.0, "irr": 0.1, "pre": 44.7, "real": -39.4, "fin": 5.3, "div": 234.9, "gap": 39.4, "putend": 0, "peak": 83.1}, "Deep": {"rep": [[0.0, 0.0], [0.25, 18.7], [0.5, 37.2], [0.75, 55.5], [1.0, 73.6], [1.25, 91.7], [1.5, 109.6], [1.75, 127.6], [2.0, 145.7], [2.25, 164.0], [2.5, 182.6], [2.75, 201.7], [3.0, 221.7], [3.25, 242.8], [3.5, 265.5], [3.75, 290.0], [4.0, 315.2], [4, -50.2]], "act": [[0.0, 0.0], [0.25, -9.3], [0.5, -18.1], [0.75, -26.2], [1.0, -33.8], [1.25, -40.8], [1.5, -47.1], [1.75, -52.8], [2.0, -57.6], [2.25, -61.7], [2.5, -64.8], [2.75, -66.7], [3.0, -67.3], [3.25, -66.1], [3.5, -62.7], [3.75, -57.0], [4.0, -50.2]], "price": 63.46, "g": -10.7, "irr": -1.2, "pre": 315.2, "real": -365.4, "fin": -50.2, "div": 190.1, "gap": 365.4, "putend": 31.536, "peak": 315.2}};
+const order = [["Up","Price rises"],["Flat","Price unchanged"],["Mild","Price falls, stays above strike"],["Deep","Price falls below strike"]];
+const k = v => (v<0?"−":v>0?"+":"")+Math.abs(v).toFixed(1);
+const cls = v => v>0.05?"pos":v<-0.05?"neg":"";
+const tb = document.getElementById("tbody");
+order.forEach(([key,label])=>{const s=D[key];
+  tb.insertAdjacentHTML("beforeend",`<tr><td>${label}</td><td>S$${s.price.toFixed(2)}</td><td>S$${s.putend.toFixed(2)}</td><td>${s.irr.toFixed(1)}%</td><td>${k(s.div)}</td><td class="col-rep">${k(s.pre)}</td><td class="${cls(s.real)}">${k(s.real)}</td><td class="${cls(s.fin)}">${k(s.fin)}</td></tr>`);});
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const panels = document.getElementById("panels"); const charts=[];
+order.forEach(([key,label],i)=>{const s=D[key];
+  panels.insertAdjacentHTML("beforeend",`<div class="panel"><div class="ph"><h2 style="font-size:16px">${label}</h2><span class="tag">${s.g>0?"+":""}${s.g}% a year · S$100 → S$${s.price.toFixed(2)}</span></div><div class="chart"><canvas id="c${i}" role="img" aria-label="${label}: reported P&L ${k(s.pre)}k before close, actual ${k(s.fin)}k at year 4"></canvas></div><div class="kv"><span>Reported before close</span><b>S$${k(s.pre)}k</b><span>Booked at close</span><b>S$${k(s.real)}k</b><span>Final P&amp;L, both views</span><b>S$${k(s.fin)}k</b></div></div>`);});
+function draw(){charts.forEach(c=>c.destroy()); charts.length=0;
+  const rep=css("--reported"), act=css("--actual"), grid=css("--line"), ink=css("--ink-3");
+  order.forEach(([key],i)=>{const s=D[key];
+    charts.push(new Chart(document.getElementById("c"+i),{type:"line",
+      data:{datasets:[
+        {label:"Reported",data:s.rep.map(p=>({x:p[0],y:p[1]})),borderColor:rep,backgroundColor:rep,borderWidth:2.5,pointRadius:c=>c.dataIndex===s.rep.length-1?4:0,tension:0.25},
+        {label:"Actual",data:s.act.map(p=>({x:p[0],y:p[1]})),borderColor:act,backgroundColor:act,borderWidth:2,borderDash:[6,4],pointRadius:c=>c.dataIndex===s.act.length-1?4:0,tension:0.25}]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:"nearest",intersect:false},
+        plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>{const x=it[0].parsed.x; return it[0].dataset.label==="Reported"&&it[0].dataIndex===s.rep.length-1?"Year 4, after close":"Year "+x.toFixed(2).replace(/\.00$/,"")},label:c=>`${c.dataset.label}: S$${k(c.parsed.y)}k`}}},
+        scales:{x:{type:"linear",min:0,max:4,ticks:{stepSize:1,color:ink,callback:v=>"Y"+v},grid:{display:false},border:{color:grid}},
+          y:{min:-100,max:700,ticks:{stepSize:100,color:ink,callback:v=>"S$"+v+"k"},grid:{color:c=>c.tick.value===0?ink:grid},border:{display:false}}}}}));});}
+draw();
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);}catch(e){}
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 </script>
 </body>
 </html>
