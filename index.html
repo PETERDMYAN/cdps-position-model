@@ -7,14 +7,14 @@
 <style>
 :root{
   --bg:#f7f7f5; --panel:#ffffff; --ink:#1a1a18; --muted:#6b6b66; --line:#e3e3df;
-  --accent:#1f4e79; --rep:#c2683a; --act:#1f4e79;
+  --accent:#1f4e79; --rep:#c2683a; --act:#1f4e79; --gapfill:#7f8c9b;
   --good:#2f7a4f; --bad:#b3402f; --warn:#8a6d1f; --warnbg:#fdf6e3;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){
  :root:not([data-theme="light"]){
   --bg:#17171a; --panel:#1f1f23; --ink:#ececea; --muted:#9b9b95; --line:#32323a;
-  --accent:#7fb2e5; --rep:#e0905c; --act:#7fb2e5;
+  --accent:#7fb2e5; --rep:#e0905c; --act:#7fb2e5; --gapfill:#8c9bab;
   --good:#5fbd87; --bad:#e8745f; --warn:#d9bc63; --warnbg:#2a2516;
  }
 }
@@ -155,7 +155,17 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
 <div class="legend">
   <span><span class="sw" style="background:var(--rep)"></span>Reported, cumulative</span>
   <span><span class="sw" style="background:var(--act)"></span>Actual, cumulative</span>
+  <span><span class="sw" style="background:var(--gapfill);opacity:.4;height:10px"></span>Divergence</span>
 </div>
+
+<div class="panel">
+  <h3 style="margin-top:0">Where the four scenarios land after four years</h3>
+  <p style="color:var(--muted);font-size:13px;margin-top:0">
+    Read the orange bars left to right: reported earnings rise as the stock falls.
+    The blue bars, the real outcome, do the opposite.</p>
+  <div id="overview"></div>
+</div>
+
 <div id="scenarios"></div>
 
 <h2><span class="n">6</span>Summary for management</h2>
@@ -199,10 +209,14 @@ function irr(cfs){
 }
 
 const SCEN = [
-  {id:'A', name:'Stock rises', tone:'Put expires worthless. The best economic outcome.'},
-  {id:'B', name:'Stock flat',  tone:'Dividend only. Put expires worthless.'},
-  {id:'C', name:'Stock falls, stays above the strike', tone:'Unprotected loss. Put expires worthless.'},
-  {id:'D', name:'Stock falls through the strike', tone:'Put is exercised and caps the loss.'}
+  {id:'A', name:'Stock rises', short:'Rises',
+   tone:'Put expires worthless. The best economic outcome.'},
+  {id:'B', name:'Stock flat', short:'Flat',
+   tone:'Dividend only. Put expires worthless.'},
+  {id:'C', name:'Stock falls, stays above the strike', short:'Falls, above strike',
+   tone:'Unprotected loss. Put expires worthless.'},
+  {id:'D', name:'Stock falls through the strike', short:'Falls through strike',
+   tone:'Put is exercised and caps the loss.'}
 ];
 
 function model(){
@@ -241,44 +255,130 @@ function rows(m, path){
   return out;
 }
 
+const MONO = 'ui-monospace,SFMono-Regular,Menlo,monospace';
+const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+
+function niceTicks(lo, hi, n){
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(v);
+  return out;
+}
+
 function chart(rs){
-  const W = 560, H = 210, L = 52, R = 14, T = 14, B = 30;
-  const xs = [0, ...rs.map(d => d.t)];
-  const ys = [0, ...rs.map(d => d.cumR), ...rs.map(d => d.cumA)];
-  let lo = Math.min(...ys), hi = Math.max(...ys);
-  if (hi - lo < 1) { hi += 1; lo -= 1; }
-  const pad = (hi - lo) * 0.14; lo -= pad; hi += pad;
-  const X = t => L + (W - L - R) * (t - xs[0]) / (xs[xs.length-1] - xs[0]);
+  const W = 780, H = 340, L = 64, R = 104, T = 30, B = 56;
+  const pts = [{t:0, cumR:0, cumA:0}, ...rs];
+  const last = pts[pts.length - 1];
+  const vals = pts.flatMap(d => [d.cumR, d.cumA]).concat(0);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi - lo < 1){ hi += 1; lo -= 1; }
+  const pad = (hi - lo) * 0.18; lo -= pad; hi += pad;
+  const X = t => L + (W - L - R) * t / last.t;
   const Y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
 
-  const line = (key, col) => {
-    const pts = [[0, 0], ...rs.map(d => [d.t, d[key]])].map(([a,b]) => X(a) + ',' + Y(b)).join(' ');
-    const dots = [[0,0], ...rs.map(d => [d.t, d[key]])]
-      .map(([a,b]) => `<circle cx="${X(a)}" cy="${Y(b)}" r="3.2" fill="${col}"/>`).join('');
-    return `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.2"
-            stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
-  };
-
-  const ticks = 4, gl = [];
-  for (let i = 0; i <= ticks; i++){
-    const v = lo + (hi - lo) * i / ticks, y = Y(v);
-    gl.push(`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>
-      <text x="${L-8}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--muted)"
-      font-family="ui-monospace,monospace">${v.toFixed(0)}</text>`);
+  let g = '';
+  for (const v of niceTicks(lo, hi, 5)){
+    const y = Y(v);
+    g += `<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`
+       + `<text x="${L-10}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--muted)"
+          font-family="${MONO}">${v.toFixed(0)}</text>`;
   }
-  const xl = xs.map(t => `<text x="${X(t)}" y="${H-10}" text-anchor="middle" font-size="10"
-    fill="var(--muted)" font-family="ui-monospace,monospace">${t}</text>`).join('');
-  const zero = (lo < 0 && hi > 0)
-    ? `<line x1="${L}" y1="${Y(0)}" x2="${W-R}" y2="${Y(0)}" stroke="var(--muted)"
-       stroke-width="1" stroke-dasharray="3 3"/>` : '';
+
+  // shaded band between the two lines: the divergence
+  const band = `<polygon points="${pts.map(d => X(d.t)+','+Y(d.cumA)).join(' ')} `
+    + `${pts.slice().reverse().map(d => X(d.t)+','+Y(d.cumR)).join(' ')}"
+       fill="var(--gapfill)" opacity="0.16"/>`;
+
+  const zero = `<line x1="${L}" y1="${Y(0)}" x2="${W-R}" y2="${Y(0)}"
+    stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4" opacity=".75"/>`;
+
+  const line = (key, col) =>
+    `<polyline points="${pts.map(d => X(d.t)+','+Y(d[key])).join(' ')}" fill="none"
+      stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`
+    + pts.map(d => `<circle cx="${X(d.t)}" cy="${Y(d[key])}" r="4.6" fill="var(--panel)"
+        stroke="${col}" stroke-width="2.6"/>`).join('');
+
+  // value labels: whichever series is higher at that year gets the label above
+  const labels = pts.map(d => {
+    const aUp = d.cumA >= d.cumR;
+    const mk = (v, col, up) => `<text x="${X(d.t)}" y="${Y(v) + (up ? -14 : 22)}"
+      text-anchor="middle" font-size="12" font-weight="600" fill="${col}"
+      font-family="${MONO}">${sgn(v)}</text>`;
+    return mk(d.cumA, 'var(--act)', aUp) + mk(d.cumR, 'var(--rep)', !aUp);
+  }).join('');
+
+  const ends = `<text x="${W-R+12}" y="${Y(last.cumA)+4}" font-size="13" font-weight="700"
+      fill="var(--act)" font-family="${SANS}">Actual</text>
+    <text x="${W-R+12}" y="${Y(last.cumR)+4}" font-size="13" font-weight="700"
+      fill="var(--rep)" font-family="${SANS}">Reported</text>`;
+
+  const xl = pts.map(d => `<text x="${X(d.t)}" y="${H-28}" text-anchor="middle" font-size="12"
+    fill="var(--muted)" font-family="${MONO}">${d.t}</text>`).join('')
+    + `<text x="${(L + W - R)/2}" y="${H-8}" text-anchor="middle" font-size="12"
+       fill="var(--muted)" font-family="${SANS}">Year</text>`;
+
+  const yTitle = `<text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
+    font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative, per share</text>`;
 
   return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
-    style="min-width:460px;max-width:${W}px;display:block" role="img"
-    aria-label="Cumulative reported versus actual by year">
-    ${gl.join('')}${zero}${line('cumA','var(--act)')}${line('cumR','var(--rep)')}${xl}
-    <text x="${L}" y="${H-10}" font-size="10" fill="var(--muted)"
-      font-family="-apple-system,sans-serif" text-anchor="start" dx="-4" dy="0"></text>
-  </svg></div><div style="font-size:11px;color:var(--muted);text-align:center;margin-top:2px">year</div>`;
+    style="min-width:620px;display:block" role="img"
+    aria-label="Cumulative reported versus actual result by year">
+    ${g}${band}${zero}${line('cumR','var(--rep)')}${line('cumA','var(--act)')}
+    ${labels}${ends}${xl}${yTitle}
+  </svg></div>`;
+}
+
+function overview(res, m){
+  const W = 780, H = 330, L = 64, R = 20, T = 30, B = 86;
+  const ids = SCEN.map(s => s.id);
+  const vals = ids.flatMap(id => [res[id].last.cumR, res[id].last.cumA]).concat(0);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.16; lo -= pad; hi += pad;
+  const X0 = L, XW = W - L - R;
+  const Y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const slot = XW / ids.length, bw = Math.min(54, slot * 0.3);
+
+  let g = '';
+  for (const v of niceTicks(lo, hi, 5)){
+    const y = Y(v);
+    g += `<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`
+       + `<text x="${L-10}" y="${y+4}" text-anchor="end" font-size="12" fill="var(--muted)"
+          font-family="${MONO}">${v.toFixed(0)}</text>`;
+  }
+  const y0 = Y(0);
+  g += `<line x1="${L}" y1="${y0}" x2="${W-R}" y2="${y0}" stroke="var(--muted)" stroke-width="1.5"/>`;
+
+  let bars = '';
+  ids.forEach((id, i) => {
+    const cx = X0 + slot * (i + 0.5);
+    const pair = [
+      {v: res[id].last.cumR, col: 'var(--rep)', dx: -bw - 4},
+      {v: res[id].last.cumA, col: 'var(--act)', dx: 4}
+    ];
+    for (const p of pair){
+      const y = Y(Math.max(p.v, 0)), h = Math.abs(Y(p.v) - y0);
+      bars += `<rect x="${cx + p.dx}" y="${y}" width="${bw}" height="${Math.max(h, 1.5)}"
+        fill="${p.col}" rx="2"/>`
+        + `<text x="${cx + p.dx + bw/2}" y="${p.v >= 0 ? y - 8 : y + h + 17}" text-anchor="middle"
+           font-size="12" font-weight="700" fill="${p.col}" font-family="${MONO}">${sgn(p.v)}</text>`;
+    }
+    bars += `<text x="${cx}" y="${H-52}" text-anchor="middle" font-size="13" font-weight="700"
+        fill="var(--ink)" font-family="${SANS}">${id}</text>`
+      + `<text x="${cx}" y="${H-34}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
+         font-family="${SANS}">${SCEN[i].short}</text>`
+      + `<text x="${cx}" y="${H-16}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
+         font-family="${MONO}">IRR ${f2(res[id].ir)}%</text>`;
+  });
+
+  return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
+    style="min-width:640px;display:block" role="img"
+    aria-label="Cumulative reported versus actual at close, four scenarios">
+    ${g}${bars}
+    <text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
+      font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative at close, per share</text>
+  </svg></div>`;
 }
 
 function table(rs, m){
@@ -340,15 +440,18 @@ function render(){
   $('tb_acc').innerHTML = acc;
 
   const res = {};
-  let html = '';
   for (const s of SCEN){
     const path = m.paths[s.id], rs = rows(m, path);
-    const last = rs[rs.length-1];
     const term = Math.max(path[m.N], m.K);
     const cfs = [-m.S0];
     for (let t = 1; t <= m.N; t++) cfs.push(m.div + (t === m.N ? term : 0));
-    const ir = irr(cfs) * 100;
-    res[s.id] = {rs, last, term, ir, path};
+    res[s.id] = {rs, last: rs[rs.length-1], term, ir: irr(cfs) * 100, path};
+  }
+  $('overview').innerHTML = overview(res, m);
+
+  let html = '';
+  for (const s of SCEN){
+    const {rs, last, term, ir, path} = res[s.id];
 
     const dirR = last.cumR >= 0 ? 'gain' : 'loss';
     const dirA = last.cumA >= 0 ? 'gain' : 'loss';
