@@ -11,7 +11,8 @@ where book reporting and economic reality diverge.
 |---|---|
 | Entry price / spot | 100 |
 | CDPS cash dividend | 6% on cost, recognised yearly |
-| Position IRR | 12% |
+| Position IRR | 12%, contractual floor |
+| Put strike | 128.68, the level that delivers the floor |
 | Tenor | 4 years |
 
 Accounting treatment, as specified:
@@ -22,15 +23,19 @@ Accounting treatment, as specified:
 
 ## The headline finding
 
-The stock price enters reported earnings with a negative sign, while the accreted value is fixed at
-trade date. Reported results therefore move in the opposite direction to the position: the best
-economic scenario prints as a loss and the worst prints as a gain, with the whole difference
-arriving as a single true-up at close.
+Because 12% is a floor, three of the four scenarios settle at the same strike and return exactly
+12%. They are economically identical. Reported earnings across them still differ by 40 per share.
+
+The cause is that the stock price enters reported earnings through the option plug with a negative
+sign, while the CDPS is carried at cost and the stock's move is never recognised on the asset
+itself. When the floor binds, reported exceeds economics by exactly the unrecognised stock move. In
+the rally case the position prints a loss while earning 17.58%.
 
 ## Scenarios
 
-Four stock paths over the four years: up, flat, down but above the put strike, and down through the
-put strike. The page is interactive, so every input and every terminal stock price can be changed.
+Four stock paths over the four years: rises past the strike, flat, falls moderately, falls hard. The
+page is interactive, so every input and every terminal stock price can be changed. The strike is
+locked to the IRR floor by default and can be unlocked to test other structures.
 
 ## Caveats
 

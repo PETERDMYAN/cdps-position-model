@@ -1,73 +1,78 @@
-# CDPS with put option: reported earnings run inverse to the position
+# CDPS with put option: four scenarios, one economic outcome, four reported numbers
 
 **Model:** https://peterdmyan.github.io/cdps-position-model/
 
+## The structure
+
+The position carries a contractual floor of 12%. With a 6% cash dividend on cost, the put strike
+that delivers that floor is **128.68**, which is 28.68% above the entry price of 100. The stock
+starts below the strike and stays there unless it rallies more than 28.68%, so in most outcomes the
+put is exercised and the floor pays. The put is not tail protection here. It is the main source of
+return.
+
 ## Bottom line
 
-Under the agreed treatment, our reported result moves in the **opposite direction** to the position.
+| Scenario | Stock, year 4 | Settles at | Reported, 4 years | Actual, 4 years | IRR |
+|---|---:|---:|---:|---:|---:|
+| A Rises past the strike | 160 | 160.00 | **-7.32** | +84.00 | 17.58% |
+| B Flat | 100 | 128.68 | +52.68 | +52.68 | 12.00% |
+| C Falls moderately | 90 | 128.68 | +62.68 | +52.68 | 12.00% |
+| D Falls hard | 60 | 128.68 | **+92.68** | +52.68 | 12.00% |
 
-| Scenario | Stock, year 4 | Reported, 4 years | Actual, 4 years | Realised IRR |
-|---|---:|---:|---:|---:|
-| Stock rises | 160 | **-7.3** | +84.0 | 17.6% |
-| Stock flat | 100 | +52.7 | +24.0 | 6.0% |
-| Stock falls, above strike | 90 | +62.7 | +14.0 | 3.6% |
-| Stock falls, through strike | 60 | **+92.7** | +4.0 | 1.1% |
-
-Ranked by reported earnings, our worst outcome looks like our best. Figures are per share on an
-entry price of 100, with a put struck at 80.
+**B, C and D are the same deal.** All three settle at the floor and all three return exactly 12%.
+Reported earnings across them range from +52.68 to +92.68, a spread of 40 per share that corresponds
+to no difference in economics whatsoever.
 
 ## Why it happens
 
-The option is marked at accreted value minus stock price. The accreted value is fixed at trade date
-and never moves, so the stock enters reported earnings with a negative sign. Every point the stock
-gains is booked as an option loss. The dividend leg cannot offset it: carried at cost it prints the
-same 6.00 every year in every scenario, so it carries no information about how the position is
-doing.
+The option carrying value is defined as accreted value minus stock price, so a falling stock inflates
+reported earnings. At the same time the CDPS is carried at cost, so the stock's decline is never
+recognised on the asset itself. The stock move is booked once, with the wrong sign, and never where
+it belongs.
+
+The arithmetic is exact: when the floor binds, reported exceeds economics by the unrecognised stock
+move. Stock down 40, reported overstates by 40.
 
 ## Three concerns
 
-1. **Signal.** Reported option P&L is a restatement of the stock price with the sign flipped, not a
-   measure of the option. Anyone using it to judge the position will read it backwards.
+1. **Four numbers for one outcome.** Three scenarios with identical economics report a 40 per share
+   spread. Anyone managing to the reported line is managing noise.
 
-2. **Timing.** Nothing pulls reported back towards economics before settlement. The entire gap, up
-   to 91 per share, lands as a single true-up in the closing period. On a position of any size that
-   is a one-off P&L event we should be explaining well before it happens, not at settlement.
+2. **Reported is right only by coincidence.** Scenario B matches to the cent because the stock
+   happens to end exactly at the entry price. Move it either way and the two separate immediately.
 
-3. **Substance.** The carrying value accretes as though 12% were certain. With the put struck 20%
-   below spot, only one of the four scenarios reaches 12%; the realised range is 1.1% to 17.6%. The
-   book is asserting a return the structure does not guarantee.
+3. **The rally case inverts completely.** The best real outcome, +84.00 and 17.58%, is the only one
+   that prints a loss. The divergence there runs at twice the stock move, because the rally is
+   subtracted through the option plug and added through economics at the same time. The gap reaches
+   91.32 per share and lands as a single true-up at close.
 
 ## What the desk needs to know
 
-- **Hedging will not stabilise the book.** A short hedge against a rising stock produces a hedge
-  loss at the same time as the option plug produces a reported loss. The two move together, not
-  against each other. Expect reported volatility of roughly the full notional delta, sign reversed.
-- **Do not read reported option P&L as exposure.** Risk has to come off the economic line.
-- **Forecast the closing true-up from year 3.** It is deterministic once the terminal stock price is
-  known. It should be socialised, not discovered.
-- **The protection gap is the real exposure.** Between the strike at 80 and the 128.68 the book
-  assumes, the position is unhedged. That band of 48.68 per share is where the structure fails to
-  deliver the accreted return, and nothing in the reporting flags it.
+- **This is a 12% instrument plus a call struck at 128.68, not a protected equity position.** Risk
+  and hedging should be framed off that, not off the 100 entry price.
+- **Reported option P&L is the stock price with a minus sign.** Read as exposure it points the wrong
+  way. Risk has to come off the economic line.
+- **Hedging the stock will destabilise the book.** A short hedge into a rally loses at the same
+  moment the option plug reports a loss. They compound rather than offset.
+- **Only the rally scenario carries real variance.** Below 128.68 the payoff is fixed. The genuine
+  question is the probability of finishing above 128.68, not the swings in reported earnings below it.
+- **The floor is only as good as the writer.** Three of four scenarios depend entirely on the put
+  paying. If the writer is connected to the stock that is falling, the protection is worth least
+  exactly when it is needed, and nothing in the reporting flags that. This is the largest unmodelled
+  risk here.
 - **Dividend risk hits twice.** A suspension stops the income line and invalidates the accretion
-  schedule at the same time.
+  schedule at the same time, which also moves the strike that floors the IRR.
 
 ## Asks
 
-1. Confirmation from Technical Accounting that the dividend leg qualifies for cost method and that
-   the option plug is the agreed mark.
-2. A decision on whether the accretion resets once a scenario becomes unlikely, rather than running
-   to maturity and truing up in one period.
-3. The term sheet strike, so we can describe the 12% accurately as a floor or as a target.
-
-## One open point
-
-A strike that makes 12% a contractual floor would have to sit at 128.68, which is 28.7% above spot.
-At that level the stock is below the strike from day one and the four scenarios collapse into one.
-The scenarios only stay distinct with a strike below spot, and a strike below spot means 12% is an
-underwriting target rather than a guarantee. The model covers both readings; the term sheet decides
-which one is ours.
+1. Confirmation from Technical Accounting that a cost-carried CDPS plus an option plug defined as
+   accreted value minus spot is the agreed treatment, given that it leaves the stock unmarked.
+2. A view on whether the position is better presented as what it economically is, a 12% instrument
+   plus a call struck at 128.68.
+3. A decision on forecasting and disclosing the closing true-up ahead of the period it lands in.
 
 ---
 
-*Illustrative model on round numbers. No position, counterparty or issuer data. Not investment
-advice and not an accounting opinion.*
+*Illustrative model on round numbers. No position, counterparty or issuer data. A Black-Scholes put
+premium is not computed: that needs volatility, the risk-free rate and the exercise style. Not
+investment advice and not an accounting opinion.*
