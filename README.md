@@ -3,7 +3,7 @@
 An illustrative four-year model of a CDPS position held alongside a put option, built to show
 where book reporting and economic reality diverge.
 
-**Live page:** https://PETERDMYAN.github.io/cdps-position-model/
+**Live page:** https://peterdmyan.github.io/cdps-position-model/  &nbsp;&nbsp;·&nbsp;&nbsp; **Management summary:** [SUMMARY.md](SUMMARY.md)
 
 ## What it models
 
