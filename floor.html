@@ -185,12 +185,6 @@ and the guaranteed value of the position at that date. Each chart plots the two 
   <span id="t_k3">128.68</span> the stock is below the strike from day one, so both are the same
   case. What remains is two economic outcomes: a rally past the strike, or the floor.
 </div>
-<div class="legend">
-  <span><span class="sw" style="background:var(--rep)"></span>Reported, cumulative</span>
-  <span><span class="sw" style="background:var(--act)"></span>Actual, cumulative</span>
-  <span><span class="sw" style="background:var(--gapfill);opacity:.4;height:10px"></span>Divergence</span>
-</div>
-
 <div class="panel">
   <div id="overview"></div>
 </div>
@@ -311,6 +305,19 @@ function rows(m, path){
 const MONO = 'ui-monospace,SFMono-Regular,Menlo,monospace';
 const SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
 
+// legend drawn inside the chart, so each chart reads on its own
+function legendSvg(items, x, y){
+  let out = '', cx = x;
+  for (const it of items){
+    out += `<rect x="${cx}" y="${y-9}" width="13" height="13" rx="3" fill="${it.col}"`
+         + `${it.op ? ` opacity="${it.op}"` : ''}/>`
+         + `<text x="${cx+19}" y="${y+1.5}" font-size="12.5" font-weight="600" fill="var(--ink)"
+            font-family="${SANS}">${it.t}</text>`;
+    cx += 19 + it.t.length * 7.15 + 24;
+  }
+  return out;
+}
+
 function niceTicks(lo, hi, n){
   const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
   const norm = raw / mag;
@@ -321,7 +328,7 @@ function niceTicks(lo, hi, n){
 }
 
 function chart(rs){
-  const W = 780, H = 340, L = 64, R = 104, T = 30, B = 56;
+  const W = 780, H = 356, L = 64, R = 104, T = 46, B = 56;
   const pts = [{t:0, cumR:0, cumA:0}, ...rs];
   const last = pts[pts.length - 1];
   const vals = pts.flatMap(d => [d.cumR, d.cumA]).concat(0);
@@ -375,16 +382,22 @@ function chart(rs){
   const yTitle = `<text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
     font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative, per share</text>`;
 
+  const leg = legendSvg([
+    {t:'Reported, cumulative', col:'var(--rep)'},
+    {t:'Actual, cumulative', col:'var(--act)'},
+    {t:'Divergence', col:'var(--gapfill)', op:0.45}
+  ], L, 20);
+
   return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
     style="min-width:620px;display:block" role="img"
     aria-label="Cumulative reported versus actual result by year">
     ${g}${band}${zero}${line('cumR','var(--rep)')}${line('cumA','var(--act)')}
-    ${labels}${ends}${xl}${yTitle}
+    ${labels}${ends}${xl}${yTitle}${leg}
   </svg></div>`;
 }
 
 function overview(res, m){
-  const W = 780, H = 352, L = 64, R = 20, T = 30, B = 108;
+  const W = 780, H = 368, L = 64, R = 20, T = 46, B = 108;
   const ids = SCEN.map(s => s.id);
   const ry = Math.max(1, m.N - 1);               // last year before the position is closed
   const open = id => res[id].rs[ry - 1];
@@ -431,10 +444,15 @@ function overview(res, m){
          font-family="${MONO}">IRR ${f2(res[id].ir)}%</text>`;
   });
 
+  const leg = legendSvg([
+    {t:`Reported, cumulative through year ${ry}`, col:'var(--rep)'},
+    {t:`Actual, cumulative through year ${ry}`, col:'var(--act)'}
+  ], L, 20);
+
   return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
     style="min-width:640px;display:block" role="img"
     aria-label="Cumulative reported versus actual with one year left to run, three scenarios">
-    ${g}${bars}
+    ${g}${bars}${leg}
     <text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
       font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative through year ${ry}, per share</text>
   </svg></div>`;
