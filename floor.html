@@ -154,22 +154,36 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
     <p>Carrying value is the present value of the expected cash flow from the whole position, less the stock price, as specified. Each year's reported option result is the change in that carrying value.</p>
     <div class="eq">option carrying value = PV of expected cash flow from whole position &minus; stock price<br>option P&amp;L = carrying value this year &minus; last year</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:12px"><b>Expected cash flow</b> means the dividends still to come plus the terminal payoff, discounted at the deal IRR. The terminal payoff is taken as the strike, so this present value is exactly the accretion schedule above and it does not move with the stock. Re-estimating the terminal payoff at the current stock price each year instead would leave every figure below unchanged except the rally case.</p>
-    <p style="margin-bottom:0"><b>The stock price enters this formula with a minus sign.</b> That single detail drives everything in section 5.</p>
+    <p style="margin-bottom:0"><b>The stock price enters this formula with a minus sign.</b> That single detail drives the year-by-year picture below.</p>
   </div>
+</div>
+<div class="panel" style="margin-top:14px">
+  <h3 style="margin-top:0">Closing the position in the final year</h3>
+  <p>The position is closed at the end of year <span id="t_n3">4</span>. Cash in is the settlement,
+  the greater of the stock price and the strike. What comes off the books is the CDPS at original
+  cost plus whatever the option leg is carried at by then, so the closing entry is the difference
+  between the two.</p>
+  <div class="eq">close-out result = settlement &minus; (CDPS at cost + option carrying value)</div>
+  <p style="margin-bottom:0">This is the entry that finally puts the stock on the books, and it is
+  the reason the two lines meet at close.</p>
 </div>
 
 <h2><span class="n">5</span>Three scenarios</h2>
-<p class="lead">Each chart plots cumulative result by year. Reported follows the two rules above.
-Actual is cash dividends received plus the change in economic value, where economic value is the
-greater of the stock price and the guaranteed value of the position at that date.</p>
+<p class="lead">Each table splits the reported line into its three pieces, year by year: the
+dividend, the option mark, and the close-out entry in the final year. Actual is cash dividends
+received plus the change in economic value, where economic value is the greater of the stock price
+and the guaranteed value of the position at that date. Each chart plots the two cumulative lines.</p>
 
 <div class="note">
-  <b>A moderate fall and a hard fall are one scenario, not two.</b>
-  The brief asked for a fall that stops short of the put strike and a fall that breaks through it.
-  With a floor of <span id="t_k3">128.68</span> the stock is below the strike from day one, so both
-  are the same case and they are shown here as one. What remains is two economic outcomes: a rally
-  past the strike, or the floor. B and C both settle at the floor and both return exactly 12%, so
-  everything that differs between those two charts is reporting, not performance.
+  <b>Once the close is booked, the books land on the right answer and only get there in the last
+  year.</b> Cumulative reported equals cumulative actual to the cent in all three scenarios, because
+  the closing entry releases the frozen option carrying value against real cash. Everything that
+  looks like a measurement error is a timing error, and the whole correction arrives in one period.
+  <br><br>
+  Note also that a moderate fall and a hard fall are one scenario here, not two. The brief asked for
+  a fall that stops short of the put strike and a fall that breaks through it, but with a floor of
+  <span id="t_k3">128.68</span> the stock is below the strike from day one, so both are the same
+  case. What remains is two economic outcomes: a rally past the strike, or the floor.
 </div>
 <div class="legend">
   <span><span class="sw" style="background:var(--rep)"></span>Reported, cumulative</span>
@@ -178,11 +192,12 @@ greater of the stock price and the guaranteed value of the position at that date
 </div>
 
 <div class="panel">
-  <h3 style="margin-top:0">Where the three scenarios land after four years</h3>
+  <h3 style="margin-top:0">Where the three scenarios stand with one year left to run</h3>
   <p style="color:var(--muted);font-size:13px;margin-top:0">
-    The blue bars are the same height in B and C because the floor pays the same in both.
-    The orange bars are not: reported earnings climb as the stock falls, purely from the marking
-    convention.</p>
+    Bars are cumulative through year 3, while the position is still open. The blue bars are the same
+    height in B and C because the floor pays the same in both; the orange bars are not. Under each
+    group is the gap at that point and the single figure that lands in year 4 when the position is
+    closed, which is what pulls the two lines back together.</p>
   <div id="overview"></div>
 </div>
 
@@ -200,6 +215,9 @@ greater of the stock price and the guaranteed value of the position at that date
     <li><b>Put strike level.</b> Set to the level that floors the position IRR at 12%, per the deal
       terms. Unlock the input above to test a different strike.</li>
     <li><b>Terminal payoff.</b> Modelled as the greater of the stock price and the strike at year 4, settled once, with no early exercise and no knock-out.</li>
+    <li><b>Closing entry.</b> The position is closed in the final year, with the settlement received
+      in cash and the CDPS released at original cost alongside the option carrying value. No fees,
+      taxes or settlement lag are modelled.</li>
     <li><b>Economic value between trade and close.</b> Modelled as the greater of the stock price
       and the contractually guaranteed value at that date, because no volatility was supplied. A full
       option mark would smooth the actual line but would not change its direction or the gap at close.</li>
@@ -280,11 +298,17 @@ function rows(m, path){
   for (let t = 1; t <= m.N; t++){
     const cv = m.pv[t] - path[t];
     const repOpt = cv - prevCV;
-    const repTot = m.div + repOpt;
+    // the position is closed in the final year: cash in is the settlement, and what comes off
+    // the books is the CDPS at cost plus whatever the option leg is carried at by then.
+    const closing = t === m.N;
+    const proceeds = closing ? Math.max(path[t], m.K) : 0;
+    const repClose = closing ? proceeds - (m.S0 + cv) : 0;
+    const repTot = m.div + repOpt + repClose;
     const ev = Math.max(path[t], m.floorPV[t]);
     const actTot = m.div + (ev - prevEV);
     cumR += repTot; cumA += actTot;
-    out.push({t, S:path[t], pv:m.pv[t], cv, repDiv:m.div, repOpt, repTot, cumR, ev, actTot, cumA});
+    out.push({t, S:path[t], pv:m.pv[t], cv, repDiv:m.div, repOpt, repClose, proceeds, repTot,
+              cumR, ev, actTot, cumA});
     prevCV = cv; prevEV = ev;
   }
   return out;
@@ -366,9 +390,11 @@ function chart(rs){
 }
 
 function overview(res, m){
-  const W = 780, H = 330, L = 64, R = 20, T = 30, B = 86;
+  const W = 780, H = 352, L = 64, R = 20, T = 30, B = 108;
   const ids = SCEN.map(s => s.id);
-  const vals = ids.flatMap(id => [res[id].last.cumR, res[id].last.cumA]).concat(0);
+  const ry = Math.max(1, m.N - 1);               // last year before the position is closed
+  const open = id => res[id].rs[ry - 1];
+  const vals = ids.flatMap(id => [open(id).cumR, open(id).cumA]).concat(0);
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const pad = (hi - lo) * 0.16; lo -= pad; hi += pad;
   const X0 = L, XW = W - L - R;
@@ -389,8 +415,8 @@ function overview(res, m){
   ids.forEach((id, i) => {
     const cx = X0 + slot * (i + 0.5);
     const pair = [
-      {v: res[id].last.cumR, col: 'var(--rep)', dx: -bw - 4},
-      {v: res[id].last.cumA, col: 'var(--act)', dx: 4}
+      {v: open(id).cumR, col: 'var(--rep)', dx: -bw - 4},
+      {v: open(id).cumA, col: 'var(--act)', dx: 4}
     ];
     for (const p of pair){
       const y = Y(Math.max(p.v, 0)), h = Math.abs(Y(p.v) - y0);
@@ -399,46 +425,54 @@ function overview(res, m){
         + `<text x="${cx + p.dx + bw/2}" y="${p.v >= 0 ? y - 8 : y + h + 17}" text-anchor="middle"
            font-size="12" font-weight="700" fill="${p.col}" font-family="${MONO}">${sgn(p.v)}</text>`;
     }
-    bars += `<text x="${cx}" y="${H-52}" text-anchor="middle" font-size="13" font-weight="700"
+    bars += `<text x="${cx}" y="${H-74}" text-anchor="middle" font-size="13" font-weight="700"
         fill="var(--ink)" font-family="${SANS}">${id}</text>`
-      + `<text x="${cx}" y="${H-34}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
+      + `<text x="${cx}" y="${H-56}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
          font-family="${SANS}">${SCEN[i].short}</text>`
-      + `<text x="${cx}" y="${H-16}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
+      + `<text x="${cx}" y="${H-37}" text-anchor="middle" font-size="11.5" fill="var(--muted)"
+         font-family="${MONO}">gap ${sgn(open(id).cumR - open(id).cumA)}</text>`
+      + `<text x="${cx}" y="${H-20}" text-anchor="middle" font-size="11.5" font-weight="700"
+         fill="var(--rep)" font-family="${MONO}">yr ${m.N}: ${sgn(res[id].last.repTot)}</text>`
+      + `<text x="${cx}" y="${H-5}" text-anchor="middle" font-size="11" fill="var(--muted)"
          font-family="${MONO}">IRR ${f2(res[id].ir)}%</text>`;
   });
 
   return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
     style="min-width:640px;display:block" role="img"
-    aria-label="Cumulative reported versus actual at close, three scenarios">
+    aria-label="Cumulative reported versus actual with one year left to run, three scenarios">
     ${g}${bars}
     <text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
-      font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative at close, per share</text>
+      font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative through year ${ry}, per share</text>
   </svg></div>`;
 }
 
 function table(rs, m){
   const head = `<thead><tr>
     <th>Year</th><th>Stock</th><th>Carrying PV</th><th>Option CV</th>
-    <th>Rep. dividend</th><th>Rep. option</th><th>Rep. total</th><th>Cum. rep.</th>
+    <th>Rep. dividend</th><th>Rep. option</th><th>Rep. close-out</th>
+    <th>Rep. total</th><th>Cum. rep.</th>
     <th>Actual total</th><th>Cum. actual</th><th>Gap</th></tr></thead>`;
   const body = rs.map(d => `<tr>
     <td>${d.t}</td><td>${f2(d.S)}</td><td>${f2(d.pv)}</td>
     <td class="${cls(d.cv)}">${f2(d.cv)}</td>
     <td>${f2(d.repDiv)}</td>
     <td class="${cls(d.repOpt)}">${sgn(d.repOpt)}</td>
+    <td class="${cls(d.repClose)}">${d.t === m.N ? sgn(d.repClose) : '&mdash;'}</td>
     <td class="${cls(d.repTot)}">${sgn(d.repTot)}</td>
     <td class="${cls(d.cumR)}">${sgn(d.cumR)}</td>
     <td class="${cls(d.actTot)}">${sgn(d.actTot)}</td>
     <td class="${cls(d.cumA)}">${sgn(d.cumA)}</td>
     <td class="${cls(d.cumR - d.cumA)}">${sgn(d.cumR - d.cumA)}</td></tr>`).join('');
   const last = rs[rs.length-1];
+  const sum = k => rs.reduce((a, d) => a + d[k], 0);
   const tot = `<tr class="tot">
     <td>Total</td><td></td><td></td><td></td>
-    <td>${f2(m.div * m.N)}</td>
-    <td class="${cls(last.cv)}">${sgn(last.cv)}</td>
+    <td>${f2(sum('repDiv'))}</td>
+    <td class="${cls(sum('repOpt'))}">${sgn(sum('repOpt'))}</td>
+    <td class="${cls(sum('repClose'))}">${sgn(sum('repClose'))}</td>
     <td class="${cls(last.cumR)}">${sgn(last.cumR)}</td>
     <td class="${cls(last.cumR)}">${sgn(last.cumR)}</td>
-    <td class="${cls(last.cumA)}">${sgn(last.cumA)}</td>
+    <td></td>
     <td class="${cls(last.cumA)}">${sgn(last.cumA)}</td>
     <td class="${cls(last.cumR - last.cumA)}">${sgn(last.cumR - last.cumA)}</td></tr>`;
   return `<div class="scroll"><table>${head}<tbody>${body}${tot}</tbody></table></div>`;
@@ -457,6 +491,7 @@ function render(){
   $('t_div2').textContent = f2(m.div);
   $('t_divpct').textContent = f2(m.dpc*100) + '%';
   $('t_n').textContent = m.N;
+  $('t_n3').textContent = m.N;
   $('t_kfloor').textContent = f2(m.K);
   $('t_kfloor2').textContent = f2(m.K);
   $('t_k3').textContent = f2(m.K);
@@ -493,99 +528,105 @@ function render(){
   for (const s of SCEN){
     const {rs, last, term, ir, path} = res[s.id];
 
-    const dirR = last.cumR >= 0 ? 'gain' : 'loss';
-    const dirA = last.cumA >= 0 ? 'gain' : 'loss';
-    const flip = (last.cumR >= 0) !== (last.cumA >= 0);
+    const ry = Math.max(1, m.N - 1);
+    const open = rs[ry - 1];
+    const openGap = open.cumR - open.cumA;
+    const flipOpen = (open.cumR >= 0) !== (open.cumA >= 0);
 
     html += `<div class="sc">
       <h3>${s.id}. ${s.name}</h3>
       <div class="meta">${s.tone} Stock ${f2(m.S0)} to ${f2(path[m.N])} over ${m.N} years.
         Terminal settlement ${f2(term)}.</div>
       <div class="kpis">
-        <div class="kpi"><div class="k">Cumulative reported</div>
-          <div class="v ${cls(last.cumR)}">${sgn(last.cumR)}</div></div>
-        <div class="kpi"><div class="k">Cumulative actual</div>
+        <div class="kpi"><div class="k">Reported, years 1 to ${ry}</div>
+          <div class="v ${cls(open.cumR)}">${sgn(open.cumR)}</div></div>
+        <div class="kpi"><div class="k">Actual, years 1 to ${ry}</div>
+          <div class="v ${cls(open.cumA)}">${sgn(open.cumA)}</div></div>
+        <div class="kpi"><div class="k">Gap before close</div>
+          <div class="v ${cls(openGap)}">${sgn(openGap)}</div></div>
+        <div class="kpi"><div class="k">Year ${m.N} reported</div>
+          <div class="v ${cls(last.repTot)}">${sgn(last.repTot)}</div></div>
+        <div class="kpi"><div class="k">Cumulative, both lines</div>
           <div class="v ${cls(last.cumA)}">${sgn(last.cumA)}</div></div>
-        <div class="kpi"><div class="k">Gap at close</div>
-          <div class="v ${cls(last.cumR-last.cumA)}">${sgn(last.cumR-last.cumA)}</div></div>
         <div class="kpi"><div class="k">Realised IRR</div>
           <div class="v">${f2(ir)}%</div></div>
       </div>
       ${chart(rs)}
       ${table(rs, m)}
       <p style="font-size:13px;color:var(--muted);margin-bottom:0">
-        Books show a ${dirR} of ${f2(Math.abs(last.cumR))}; the position actually made a
-        ${dirA} of ${f2(Math.abs(last.cumA))}.
-        ${flip ? '<b>The two carry opposite signs.</b>' : ''}
-        A true-up of ${sgn(last.cumA - last.cumR)} lands in the closing period.</p>
+        Through year ${ry} the books show ${sgn(open.cumR)} against economics of
+        ${sgn(open.cumA)}, a gap of ${sgn(openGap)}.
+        ${flipOpen ? '<b>The two carry opposite signs for the whole open life of the trade.</b> ' : ''}
+        Closing the position books ${sgn(last.repTot)} in year ${m.N} alone, and both lines finish
+        at ${sgn(last.cumA)}.
+        ${Math.abs(last.cumR - last.cumA) < 0.005
+          ? 'The reported total is right only because the closing entry absorbs the entire difference.'
+          : 'A residual gap of ' + sgn(last.cumR - last.cumA) + ' remains at close.'}</p>
     </div>`;
   }
   $('scenarios').innerHTML = html;
 
-  const A = res.A, C = res.C;
-  const gapFloor = m.S0 - C.path[m.N];
+  const A = res.A, B = res.B, C = res.C;
+  const ry = Math.max(1, m.N - 1);
+  const op = x => x.rs[ry - 1];
+  const spread = op(C).cumR - op(B).cumR;
   $('summary').innerHTML = `
-    <p><b>There are two economic outcomes here, not four, and the books report a different number
-    for every path.</b> A fall that stops short of the strike and a fall that breaks through it are
-    the same case, because the strike of ${f2(m.K)} sits above spot from day one. B and C both
-    settle at the floor and both return exactly ${f2(m.r*100)}%. Reported earnings are
-    ${sgn(res.B.last.cumR)} and ${sgn(res.C.last.cumR)}, a spread of
-    ${f2(res.C.last.cumR - res.B.last.cumR)} per share that corresponds to no difference in
-    economics at all. Make the fall deeper and that spread widens one for one while the economics
-    stay put.</p>
+    <p><b>Over the life of the trade the books get the right answer. They are wrong in every year
+    but the last one.</b> Once the position is closed, cumulative reported equals cumulative actual
+    to the cent in all three scenarios, because the closing entry releases the frozen option
+    carrying value against real cash. This is not a measurement problem, it is a timing problem, and
+    the entire correction arrives in a single period.</p>
 
-    <p><b>The stock move is booked once, with the wrong sign, and never where it belongs.</b>
-    The option carrying value is the accreted value minus the stock price, so a falling stock
-    inflates reported earnings. Meanwhile the CDPS is carried at cost, so the stock's decline is
-    never recognised on the asset itself. The result is that reported earnings exceed economics by
-    exactly the unrecognised stock move: ${sgn(gapFloor)} in scenario C, where the stock fell from
-    ${f2(m.S0)} to ${f2(C.path[m.N])}.</p>
+    <p><b>In the rally case the books show a loss in every open year while the position earns
+    ${sgn(A.rs[0].actTot)} a year.</b> Through year ${ry} the books show ${sgn(op(A).cumR)} against
+    economics of ${sgn(op(A).cumA)}, a gap of ${sgn(op(A).cumR - op(A).cumA)} per share with the two
+    lines on opposite sides of zero the whole way. Closing the position then books
+    ${sgn(A.last.repTot)} in year ${m.N} alone.</p>
 
-    <p><b>Reported is only correct when the stock ends exactly where it started.</b>
-    In scenario B the stock closes at ${f2(res.B.path[m.N])} and reported matches economics to the
-    cent. Move the terminal price in either direction and the two separate immediately. That is a
-    coincidence, not a control.</p>
+    <p><b>Two economically identical scenarios stay ${f2(spread)} apart until the last day.</b>
+    B and C both return ${f2(m.r*100)}% and both show ${sgn(op(B).cumA)} of economics through year
+    ${ry}, yet the books show ${sgn(op(B).cumR)} and ${sgn(op(C).cumR)}. Make the fall deeper and
+    that spread widens one for one while the economics do not move at all.</p>
 
-    <p><b>The rally case is the worst reported outcome and the best real one.</b>
-    If the stock reaches ${f2(A.path[m.N])}, the position earns ${sgn(A.last.cumA)} and returns
-    ${f2(A.ir)}%, while the books show ${sgn(A.last.cumR)} across the ${m.N} years. The divergence
-    runs at twice the stock move here, because the rally is subtracted through the option plug and
-    added through economics at the same time. The gap reaches ${sgn(A.last.cumR - A.last.cumA)}.</p>
+    <p><b>The closing year inverts the sign in the fall case.</b> C reports a healthy profit in
+    every open year and then books ${sgn(C.last.repTot)} in year ${m.N}, its only negative year, in
+    the year the position economically earns ${sgn(C.last.actTot)}.</p>
 
-    <p><b>Nothing corrects before settlement.</b>
-    The whole difference arrives as a single true-up in the closing period, up to
-    ${sgn(A.last.cumA - A.last.cumR)} per share. On any meaningful size that is a P&L event we
-    should be explaining in advance, not at settlement.</p>
+    <p><b>The reported line tells you nothing about which scenario you are in.</b> Scenario B is the
+    only one where it tracks economics year by year, and only because the stock happens to sit at
+    the entry price throughout. Everywhere else the reported figure is the accretion schedule minus
+    the stock price, which moves against the position rather than with it.</p>
 
     <p><b>What I would ask for.</b>
-    Confirmation from Technical Accounting that a cost-carried CDPS plus an option plug defined as
-    accreted value minus spot is the agreed treatment, given that it leaves the stock unmarked. A
-    view on whether the position is better presented as what it economically is, a ${f2(m.r*100)}%
-    instrument plus a call struck at ${f2(m.K)}. And a decision on forecasting and disclosing the
-    closing true-up well ahead of the period it lands in.</p>`;
+    First, confirmation from Technical Accounting on the closing entry, releasing the CDPS at
+    original cost alongside the option carrying value against settlement proceeds, since that single
+    entry carries the whole correction. Second, agreement on how we flag the closing-period swing in
+    advance: across these three paths it runs from ${sgn(C.last.repTot)} to ${sgn(A.last.repTot)}
+    per share in one period. Third, a view on presenting the economic line next to the reported line
+    for the open years, because the reported line on its own is not decision-grade until close.</p>`;
 
   $('trader').innerHTML = `
     <ul>
+      <li><b>The reported line is not a risk signal at any point before close.</b> Option carrying
+        value is accreted value minus spot, so it restates the stock with the sign reversed and adds
+        a fixed accretion on top. Risk has to come off the economic line.</li>
       <li><b>Economically this is a ${f2(m.r*100)}% instrument plus a call, not a protected equity
         position.</b> The floor pays in every scenario except a rally past ${f2(m.K)}, which is
-        ${f2((m.K/m.S0-1)*100)}% above spot. Risk and hedging should be framed off that, not off the
+        ${f2((m.K/m.S0-1)*100)}% above spot. Frame risk and hedging off that, not off the
         ${f2(m.S0)} entry price.</li>
-      <li><b>Reported option P&L is the stock price with a minus sign.</b> Carrying value is accreted
-        value minus spot, so it restates the stock rather than measuring the option. Read as exposure
-        it points the wrong way. Risk has to come off the economic line.</li>
-      <li><b>Hedging the stock will destabilise the book, not steady it.</b> A short hedge into a
-        rally loses at the same moment the option plug reports a loss. The two compound. Expect
-        reported swings of roughly the full notional delta with the sign reversed.</li>
+      <li><b>Size the closing period in advance.</b> It is deterministic once the terminal price is
+        known and it carries the entire difference, from ${sgn(C.last.repTot)} to
+        ${sgn(A.last.repTot)} per share on these paths. Forecast it from year ${ry}.</li>
       <li><b>Only the rally scenario carries real variance.</b> Below ${f2(m.K)} the payoff is fixed,
         so the entire difference between B and C, and between any two fall paths, is accounting
-        noise. Flagging those swings as risk events will waste attention; the genuine question is
-        the probability of finishing above ${f2(m.K)}.</li>
-      <li><b>Forecast the closing true-up from year ${Math.max(1, m.N-1)}.</b> It is deterministic
-        once the terminal price is known and runs to ${sgn(A.last.cumA - A.last.cumR)} per share in
-        the rally case.</li>
+        noise. The genuine question is the probability of finishing above ${f2(m.K)}.</li>
+      <li><b>Hedging the stock will destabilise the reported line further, not steady it.</b> A short
+        hedge into a rally loses at the same moment the option mark reports a loss. The two compound
+        through the open years and then both reverse at close.</li>
       <li><b>The floor is only as good as the writer.</b> Every outcome except a rally past
-        ${f2(m.K)} depends entirely on the put paying. If the writer is connected to the stock that is falling, the protection is
-        worth least exactly when it is needed, and nothing in the reporting flags that.</li>
+        ${f2(m.K)} depends entirely on the put paying. If the writer is connected to the stock that
+        is falling, the protection is worth least exactly when it is needed, and nothing in the
+        reporting flags that.</li>
       <li><b>Dividend risk hits twice.</b> A suspension stops the income line and invalidates the
         accretion schedule at the same time, which also moves the strike that floors the IRR.</li>
     </ul>`;
