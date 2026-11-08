@@ -151,8 +151,9 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
   </div>
   <div class="panel">
     <h3>Put option, marked to market</h3>
-    <p>Carrying value is the accreted position value less the stock price, as specified. Each year's reported option result is the change in that carrying value.</p>
-    <div class="eq">option carrying value = PV(CDPS with option) &minus; stock price<br>option P&amp;L = carrying value this year &minus; last year</div>
+    <p>Carrying value is the present value of the expected cash flow from the whole position, less the stock price, as specified. Each year's reported option result is the change in that carrying value.</p>
+    <div class="eq">option carrying value = PV of expected cash flow from whole position &minus; stock price<br>option P&amp;L = carrying value this year &minus; last year</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px"><b>Expected cash flow</b> means the dividends still to come plus the terminal payoff, discounted at the deal IRR. The terminal payoff is taken as the strike, so this present value is exactly the accretion schedule above and it does not move with the stock. Re-estimating the terminal payoff at the current stock price each year instead would leave every figure below unchanged except the rally case.</p>
     <p style="margin-bottom:0"><b>The stock price enters this formula with a minus sign.</b> That single detail drives everything in section 5.</p>
   </div>
 </div>
