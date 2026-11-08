@@ -33,7 +33,7 @@ p{margin:10px 0}
 .lead{color:var(--muted);margin-top:0;margin-bottom:18px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin:16px 0}
 .grid{display:grid;gap:16px}
-@media(min-width:800px){.g2{grid-template-columns:1fr 1fr}.g4{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:800px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
 label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
  background:var(--bg);color:var(--ink);font:14px var(--mono)}
@@ -82,7 +82,7 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
 </header>
 
 <h2><span class="n">1</span>Inputs</h2>
-<p class="lead">Every number on this page recalculates from these five inputs plus the four stock paths. Change any of them to test a different deal.</p>
+<p class="lead">Every number on this page recalculates from these five inputs plus the three stock paths. Change any of them to test a different deal.</p>
 <div class="panel">
   <div class="grid g4">
     <div><label>Entry price / spot</label><input type="number" id="i_s0" value="100" step="1"></div>
@@ -102,13 +102,12 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
     </div>
     <div>
       <label>Year-4 stock price per scenario</label>
-      <div class="grid g4">
+      <div class="grid g3">
         <div><input type="number" id="e_A" value="160" step="5"></div>
         <div><input type="number" id="e_B" value="100" step="5"></div>
-        <div><input type="number" id="e_C" value="90" step="5"></div>
-        <div><input type="number" id="e_D" value="60" step="5"></div>
+        <div><input type="number" id="e_C" value="60" step="5"></div>
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">Rises past the strike, flat, falls moderately, falls hard. Intermediate years interpolate linearly.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Rises past the strike, flat, falls below the strike. Intermediate years interpolate linearly. Any fall below the strike gives the same economics, so the third input only moves the reported number.</div>
     </div>
   </div>
 </div>
@@ -133,7 +132,7 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
 <div class="note">
   <b>The strike sits <span id="t_kprem">28.7%</span> above spot, and that is the point.</b>
   A floor of <span id="t_kfloor">128.68</span> is what 12% costs when the dividend only delivers
-  <span id="t_divpct2">6%</span>. The stock starts below the strike and stays there in three of the four
+  <span id="t_divpct2">6%</span>. The stock starts below the strike and stays there in two of the three
   scenarios, so the put is exercised and the position returns exactly 12%. Only a rally past
   <span id="t_kfloor2">128.68</span> beats the floor. The put is not tail protection here. It is the
   main source of return.
@@ -158,16 +157,18 @@ code{font:13px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4p
   </div>
 </div>
 
-<h2><span class="n">5</span>Four scenarios</h2>
+<h2><span class="n">5</span>Three scenarios</h2>
 <p class="lead">Each chart plots cumulative result by year. Reported follows the two rules above.
 Actual is cash dividends received plus the change in economic value, where economic value is the
 greater of the stock price and the guaranteed value of the position at that date.</p>
 
 <div class="note">
-  <b>Three of the four scenarios are the same deal.</b>
-  Because the floor binds whenever the stock ends below the strike, B, C and D all settle at
-  <span id="t_k3">128.68</span> and all return exactly 12%. Their economics are identical. Everything
-  that differs between those three charts is reporting, not performance.
+  <b>A moderate fall and a hard fall are one scenario, not two.</b>
+  The brief asked for a fall that stops short of the put strike and a fall that breaks through it.
+  With a floor of <span id="t_k3">128.68</span> the stock is below the strike from day one, so both
+  are the same case and they are shown here as one. What remains is two economic outcomes: a rally
+  past the strike, or the floor. B and C both settle at the floor and both return exactly 12%, so
+  everything that differs between those two charts is reporting, not performance.
 </div>
 <div class="legend">
   <span><span class="sw" style="background:var(--rep)"></span>Reported, cumulative</span>
@@ -176,9 +177,9 @@ greater of the stock price and the guaranteed value of the position at that date
 </div>
 
 <div class="panel">
-  <h3 style="margin-top:0">Where the four scenarios land after four years</h3>
+  <h3 style="margin-top:0">Where the three scenarios land after four years</h3>
   <p style="color:var(--muted);font-size:13px;margin-top:0">
-    The blue bars are flat across B, C and D because the floor pays the same in all three.
+    The blue bars are the same height in B and C because the floor pays the same in both.
     The orange bars are not: reported earnings climb as the stock falls, purely from the marking
     convention.</p>
   <div id="overview"></div>
@@ -203,7 +204,8 @@ greater of the stock price and the guaranteed value of the position at that date
       option mark would smooth the actual line but would not change its direction or the gap at close.</li>
     <li><b>Dividend certainty.</b> Modelled as paid in full and in cash every year. A deferral or a payment in kind would break the accretion schedule as well as the income line.</li>
     <li><b>No counterparty reserve.</b> The put is assumed to pay in full. Since the floor carries
-      the return in three of the four scenarios, this is the single largest unmodelled risk on the page.</li>
+      the return in every outcome except a rally past the strike, this is the single largest
+      unmodelled risk on the page.</li>
   </ul>
 </div>
 
@@ -235,10 +237,8 @@ const SCEN = [
    tone:'The only scenario that beats the floor. Put expires worthless and the upside is kept.'},
   {id:'B', name:'Stock flat', short:'Flat',
    tone:'Below the strike, so the put is exercised and the floor pays.'},
-  {id:'C', name:'Stock falls moderately', short:'Falls moderately',
-   tone:'Below the strike. Identical economics to B: the floor pays.'},
-  {id:'D', name:'Stock falls hard', short:'Falls hard',
-   tone:'Still below the strike. Identical economics to B and C: the floor pays.'}
+  {id:'C', name:'Stock falls below the strike', short:'Falls below strike',
+   tone:'A moderate fall and a hard fall collapse into this one case: anything below the strike settles at the floor, exactly as B does. Only the reported number moves with the depth of the fall.'}
 ];
 
 function model(){
@@ -408,7 +408,7 @@ function overview(res, m){
 
   return `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%"
     style="min-width:640px;display:block" role="img"
-    aria-label="Cumulative reported versus actual at close, four scenarios">
+    aria-label="Cumulative reported versus actual at close, three scenarios">
     ${g}${bars}
     <text transform="translate(16,${(T + H - B)/2}) rotate(-90)" text-anchor="middle"
       font-size="12" fill="var(--muted)" font-family="${SANS}">Cumulative at close, per share</text>
@@ -521,22 +521,24 @@ function render(){
   }
   $('scenarios').innerHTML = html;
 
-  const A = res.A, D = res.D;
-  const gapFloor = m.S0 - D.path[m.N];
+  const A = res.A, C = res.C;
+  const gapFloor = m.S0 - C.path[m.N];
   $('summary').innerHTML = `
-    <p><b>The position returns 12% in three of our four scenarios, and the books report four
-    different numbers.</b> B, C and D all settle at the floor of ${f2(m.K)} and all return exactly
-    ${f2(m.r*100)}%. They are the same deal. Reported earnings across those three range from
-    ${sgn(res.B.last.cumR)} to ${sgn(res.D.last.cumR)}, a spread of
-    ${f2(res.D.last.cumR - res.B.last.cumR)} per share that corresponds to no difference in
-    economics at all.</p>
+    <p><b>There are two economic outcomes here, not four, and the books report a different number
+    for every path.</b> A fall that stops short of the strike and a fall that breaks through it are
+    the same case, because the strike of ${f2(m.K)} sits above spot from day one. B and C both
+    settle at the floor and both return exactly ${f2(m.r*100)}%. Reported earnings are
+    ${sgn(res.B.last.cumR)} and ${sgn(res.C.last.cumR)}, a spread of
+    ${f2(res.C.last.cumR - res.B.last.cumR)} per share that corresponds to no difference in
+    economics at all. Make the fall deeper and that spread widens one for one while the economics
+    stay put.</p>
 
     <p><b>The stock move is booked once, with the wrong sign, and never where it belongs.</b>
     The option carrying value is the accreted value minus the stock price, so a falling stock
     inflates reported earnings. Meanwhile the CDPS is carried at cost, so the stock's decline is
     never recognised on the asset itself. The result is that reported earnings exceed economics by
-    exactly the unrecognised stock move: ${sgn(gapFloor)} in scenario D, where the stock fell from
-    ${f2(m.S0)} to ${f2(D.path[m.N])}.</p>
+    exactly the unrecognised stock move: ${sgn(gapFloor)} in scenario C, where the stock fell from
+    ${f2(m.S0)} to ${f2(C.path[m.N])}.</p>
 
     <p><b>Reported is only correct when the stock ends exactly where it started.</b>
     In scenario B the stock closes at ${f2(res.B.path[m.N])} and reported matches economics to the
@@ -574,21 +576,21 @@ function render(){
         rally loses at the same moment the option plug reports a loss. The two compound. Expect
         reported swings of roughly the full notional delta with the sign reversed.</li>
       <li><b>Only the rally scenario carries real variance.</b> Below ${f2(m.K)} the payoff is fixed,
-        so every move in reported earnings across B, C and D is accounting noise. Flagging those
-        swings as risk events will waste attention; the genuine question is the probability of
-        finishing above ${f2(m.K)}.</li>
+        so the entire difference between B and C, and between any two fall paths, is accounting
+        noise. Flagging those swings as risk events will waste attention; the genuine question is
+        the probability of finishing above ${f2(m.K)}.</li>
       <li><b>Forecast the closing true-up from year ${Math.max(1, m.N-1)}.</b> It is deterministic
         once the terminal price is known and runs to ${sgn(A.last.cumA - A.last.cumR)} per share in
         the rally case.</li>
-      <li><b>The floor is only as good as the writer.</b> Three of four scenarios depend entirely on
-        the put paying. If the writer is connected to the stock that is falling, the protection is
+      <li><b>The floor is only as good as the writer.</b> Every outcome except a rally past
+        ${f2(m.K)} depends entirely on the put paying. If the writer is connected to the stock that is falling, the protection is
         worth least exactly when it is needed, and nothing in the reporting flags that.</li>
       <li><b>Dividend risk hits twice.</b> A suspension stops the income line and invalidates the
         accretion schedule at the same time, which also moves the strike that floors the IRR.</li>
     </ul>`;
 }
 
-for (const id of ['i_s0','i_div','i_irr','i_n','i_k','e_A','e_B','e_C','e_D'])
+for (const id of ['i_s0','i_div','i_irr','i_n','i_k','e_A','e_B','e_C'])
   $(id).addEventListener('input', render);
 $('i_lock').addEventListener('change', render);
 $('b_prot').addEventListener('click', () => {

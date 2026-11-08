@@ -1,4 +1,4 @@
-# CDPS with put option: four scenarios, one economic outcome, four reported numbers
+# CDPS with put option: two economic outcomes, three reported numbers
 
 **Model:** https://peterdmyan.github.io/cdps-position-model/floor.html
 
@@ -10,18 +10,23 @@ starts below the strike and stays there unless it rallies more than 28.68%, so i
 put is exercised and the floor pays. The put is not tail protection here. It is the main source of
 return.
 
+One consequence is worth stating up front. The brief asked for a fall that stops short of the strike
+and a fall that breaks through it. Because the strike sits above spot from day one, those are the
+same case, so they are shown as one scenario. Three scenarios remain, covering two economic
+outcomes: a rally past the strike, or the floor.
+
 ## Bottom line
 
 | Scenario | Stock, year 4 | Settles at | Reported, 4 years | Actual, 4 years | IRR |
 |---|---:|---:|---:|---:|---:|
 | A Rises past the strike | 160 | 160.00 | **-7.32** | +84.00 | 17.58% |
 | B Flat | 100 | 128.68 | +52.68 | +52.68 | 12.00% |
-| C Falls moderately | 90 | 128.68 | +62.68 | +52.68 | 12.00% |
-| D Falls hard | 60 | 128.68 | **+92.68** | +52.68 | 12.00% |
+| C Falls below the strike | 60 | 128.68 | **+92.68** | +52.68 | 12.00% |
 
-**B, C and D are the same deal.** All three settle at the floor and all three return exactly 12%.
-Reported earnings across them range from +52.68 to +92.68, a spread of 40 per share that corresponds
-to no difference in economics whatsoever.
+**B and C are the same deal.** Both settle at the floor and both return exactly 12%. Reported
+earnings are +52.68 and +92.68, a spread of 40 per share that corresponds to no difference in
+economics whatsoever. Make the fall deeper and that spread widens one for one, while the economics
+stay where they are.
 
 ## Why it happens
 
@@ -35,8 +40,9 @@ move. Stock down 40, reported overstates by 40.
 
 ## Three concerns
 
-1. **Four numbers for one outcome.** Three scenarios with identical economics report a 40 per share
-   spread. Anyone managing to the reported line is managing noise.
+1. **One outcome, as many reported numbers as there are paths to it.** Every stock price below
+   128.68 produces the same 12% return and a different reported figure, 40 per share apart over the
+   range shown here. Anyone managing to the reported line is managing noise.
 
 2. **Reported is right only by coincidence.** Scenario B matches to the cent because the stock
    happens to end exactly at the entry price. Move it either way and the two separate immediately.
@@ -54,10 +60,11 @@ move. Stock down 40, reported overstates by 40.
   way. Risk has to come off the economic line.
 - **Hedging the stock will destabilise the book.** A short hedge into a rally loses at the same
   moment the option plug reports a loss. They compound rather than offset.
-- **Only the rally scenario carries real variance.** Below 128.68 the payoff is fixed. The genuine
-  question is the probability of finishing above 128.68, not the swings in reported earnings below it.
-- **The floor is only as good as the writer.** Three of four scenarios depend entirely on the put
-  paying. If the writer is connected to the stock that is falling, the protection is worth least
+- **Only the rally scenario carries real variance.** Below 128.68 the payoff is fixed, so the whole
+  difference between B and C, and between any two fall paths, is accounting noise. The genuine
+  question is the probability of finishing above 128.68.
+- **The floor is only as good as the writer.** Every outcome except a rally past 128.68 depends
+  entirely on the put paying. If the writer is connected to the stock that is falling, the protection is worth least
   exactly when it is needed, and nothing in the reporting flags that. This is the largest unmodelled
   risk here.
 - **Dividend risk hits twice.** A suspension stops the income line and invalidates the accretion
